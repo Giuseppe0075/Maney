@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres
+    container_name: maney-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: maney
+      POSTGRES_USER: giuse
+      POSTGRES_PASSWORD: WhatAPassword!
+    volumes:
+      - maney-pgdata:/var/lib/postgresql
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U giuse"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+volumes:
+    maney-pgdata:

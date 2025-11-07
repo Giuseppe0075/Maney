@@ -1,5 +1,7 @@
-package user.controller;
+package com.giuseppesica.Maney.user.controller;
 
+import com.giuseppesica.Maney.user.dto.UserRegistrationDto;
+import com.giuseppesica.Maney.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -8,10 +10,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import user.domain.User;
-import user.dto.UserRegistrationDto;
-import user.dto.UserResponseDto;
-import user.service.UserService;
+import com.giuseppesica.Maney.user.domain.User;
+import com.giuseppesica.Maney.user.dto.UserResponseDto;
 
 @RestController
 @RequestMapping("/users")

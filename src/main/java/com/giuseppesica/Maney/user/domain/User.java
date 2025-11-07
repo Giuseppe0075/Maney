@@ -1,4 +1,4 @@
-package user.domain;
+package com.giuseppesica.Maney.user.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;

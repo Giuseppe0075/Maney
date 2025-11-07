@@ -1,4 +1,4 @@
-package user.config;
+package com.giuseppesica.Maney.user.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

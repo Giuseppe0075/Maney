@@ -1,8 +1,6 @@
 package user.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -10,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Date;
+import java.time.Instant;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -29,14 +27,26 @@ public class User {
     @Email
     private String email;
 
-    private Date emailVerifiedAt;
+    private Instant emailVerifiedAt;
 
     @NotNull
     private String passwordHash;
 
     @NotNull
-    private Date createdAt;
+    private Instant createdAt;
 
     @NotNull
-    private Date updatedAt;
+    private Instant updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        Instant now = Instant.now();
+        createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = Instant.now();
+    }
 }

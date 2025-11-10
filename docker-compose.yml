@@ -2,18 +2,37 @@ services:
   db:
     image: postgres
     container_name: maney-postgres
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_DB: maney
       POSTGRES_USER: giuse
-      POSTGRES_PASSWORD: WhatAPassword!
+      POSTGRES_PASSWORD: "WhatAPassword!"
+    ports:
+      - "5432:5432"
     volumes:
       - maney-pgdata:/var/lib/postgresql
     healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U giuse"]
-        interval: 10s
-        timeout: 5s
-        retries: 5
+      test: ["CMD-SHELL", "pg_isready -U giuse -d maney"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/maney
+      SPRING_DATASOURCE_USERNAME: giuse
+      SPRING_DATASOURCE_PASSWORD: "WhatAPassword!"
+      # JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
-    maney-pgdata:
+  maney-pgdata:

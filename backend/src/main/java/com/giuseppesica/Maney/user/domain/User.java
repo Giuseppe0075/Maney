@@ -15,6 +15,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
+@Table(name = "app_user")
 public class User {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)

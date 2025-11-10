@@ -1,15 +1,14 @@
-package com.giuseppesica.Maney.user.service;
+package com.giuseppesica.Maney.user;
 
 import com.giuseppesica.Maney.user.domain.User;
 import com.giuseppesica.Maney.user.domain.UserRepository;
+import com.giuseppesica.Maney.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -70,9 +69,8 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(email)).thenReturn(true);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userService.register("john_doe", email, "password123");
-        });
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> userService.register("john_doe", email, "password123"));
         assertEquals("Email already in use", exception.getMessage());
     }
 }

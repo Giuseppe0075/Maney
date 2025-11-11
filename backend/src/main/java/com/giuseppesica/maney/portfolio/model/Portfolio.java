@@ -1,6 +1,6 @@
-package com.giuseppesica.maney.portfolio.dto;
+package com.giuseppesica.maney.portfolio.model;
 
-import com.giuseppesica.maney.user.domain.User;
+import com.giuseppesica.maney.user.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

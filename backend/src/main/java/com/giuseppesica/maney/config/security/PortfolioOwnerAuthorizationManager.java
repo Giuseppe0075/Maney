@@ -1,7 +1,7 @@
 package com.giuseppesica.maney.config.security;
 
-import com.giuseppesica.maney.portfolio.dto.Portfolio;
-import com.giuseppesica.maney.portfolio.dto.PortfolioRepository;
+import com.giuseppesica.maney.portfolio.model.Portfolio;
+import com.giuseppesica.maney.portfolio.model.PortfolioRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authorization.AuthorizationDecision;

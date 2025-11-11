@@ -1,4 +1,4 @@
-package com.giuseppesica.maney.portfolio.dto;
+package com.giuseppesica.maney.portfolio.model;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

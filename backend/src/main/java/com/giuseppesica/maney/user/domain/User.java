@@ -1,6 +1,6 @@
-package com.giuseppesica.Maney.user.domain;
+package com.giuseppesica.maney.user.domain;
 
-import com.giuseppesica.Maney.portfolio.dto.Portfolio;
+import com.giuseppesica.maney.portfolio.dto.Portfolio;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;

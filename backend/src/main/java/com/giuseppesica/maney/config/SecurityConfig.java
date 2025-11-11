@@ -1,4 +1,4 @@
-package com.giuseppesica.Maney.config;
+package com.giuseppesica.maney.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

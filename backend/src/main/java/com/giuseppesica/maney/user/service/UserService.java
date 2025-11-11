@@ -1,10 +1,10 @@
-package com.giuseppesica.Maney.user.service;
+package com.giuseppesica.maney.user.service;
 
-import com.giuseppesica.Maney.user.domain.UserRepository;
+import com.giuseppesica.maney.user.domain.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.giuseppesica.Maney.user.domain.User;
+import com.giuseppesica.maney.user.domain.User;
 
 import java.util.Optional;
 

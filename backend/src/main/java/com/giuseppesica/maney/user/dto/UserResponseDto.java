@@ -1,7 +1,7 @@
-package com.giuseppesica.Maney.user.dto;
+package com.giuseppesica.maney.user.dto;
 
 import lombok.Getter;
-import com.giuseppesica.Maney.user.domain.User;
+import com.giuseppesica.maney.user.domain.User;
 
 import java.time.Instant;
 

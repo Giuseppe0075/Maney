@@ -1,4 +1,4 @@
-package com.giuseppesica.Maney.user.dto;
+package com.giuseppesica.maney.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

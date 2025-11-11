@@ -1,4 +1,4 @@
-package com.giuseppesica.Maney;
+package com.giuseppesica.maney;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

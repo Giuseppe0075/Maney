@@ -1,9 +1,9 @@
-package com.giuseppesica.Maney.user;
+package com.giuseppesica.maney.user;
 
-import com.giuseppesica.Maney.user.controller.UserController;
-import com.giuseppesica.Maney.user.domain.User;
-import com.giuseppesica.Maney.user.dto.UserRegistrationDto;
-import com.giuseppesica.Maney.user.service.UserService;
+import com.giuseppesica.maney.user.controller.UserController;
+import com.giuseppesica.maney.user.domain.User;
+import com.giuseppesica.maney.user.dto.UserRegistrationDto;
+import com.giuseppesica.maney.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

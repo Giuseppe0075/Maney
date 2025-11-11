@@ -1,8 +1,8 @@
-package com.giuseppesica.Maney.user.controller;
+package com.giuseppesica.maney.user.controller;
 
-import com.giuseppesica.Maney.portfolio.dto.Portfolio;
-import com.giuseppesica.Maney.user.dto.UserRegistrationDto;
-import com.giuseppesica.Maney.user.service.UserService;
+import com.giuseppesica.maney.portfolio.dto.Portfolio;
+import com.giuseppesica.maney.user.dto.UserRegistrationDto;
+import com.giuseppesica.maney.user.service.UserService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.giuseppesica.Maney.user.domain.User;
-import com.giuseppesica.Maney.user.dto.UserResponseDto;
+import com.giuseppesica.maney.user.domain.User;
+import com.giuseppesica.maney.user.dto.UserResponseDto;
 
 @RestController
 @RequestMapping("/users")

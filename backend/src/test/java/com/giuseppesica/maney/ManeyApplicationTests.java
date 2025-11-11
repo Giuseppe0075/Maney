@@ -1,4 +1,4 @@
-package com.giuseppesica.Maney;
+package com.giuseppesica.maney;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

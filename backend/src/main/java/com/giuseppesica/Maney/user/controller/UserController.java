@@ -1,7 +1,9 @@
 package com.giuseppesica.Maney.user.controller;
 
+import com.giuseppesica.Maney.portfolio.dto.Portfolio;
 import com.giuseppesica.Maney.user.dto.UserRegistrationDto;
 import com.giuseppesica.Maney.user.service.UserService;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
+    @Transactional
     public ResponseEntity<UserResponseDto> registration(
             @Valid @RequestBody UserRegistrationDto registrationDto) {
         User user = userService.register(
@@ -31,6 +34,8 @@ public class UserController {
                 registrationDto.getEmail(),
                 registrationDto.getPassword()
         );
+        Portfolio portfolio = new Portfolio();
+        user.setPortfolio(portfolio);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponseDto(user));
     }
 }

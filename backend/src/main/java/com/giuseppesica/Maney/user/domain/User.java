@@ -1,5 +1,6 @@
 package com.giuseppesica.Maney.user.domain;
 
+import com.giuseppesica.Maney.portfolio.dto.Portfolio;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -38,6 +39,16 @@ public class User {
 
     @NotNull
     private Instant updatedAt;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Portfolio portfolio;
+
+    public void setPortfolio(Portfolio p){
+        this.portfolio = p;
+        if(p != null) {
+            p.setUser(this);
+        }
+    }
 
     @PrePersist
     protected void onCreate() {

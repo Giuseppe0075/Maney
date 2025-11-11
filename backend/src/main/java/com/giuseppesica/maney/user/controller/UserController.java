@@ -1,6 +1,6 @@
 package com.giuseppesica.maney.user.controller;
 
-import com.giuseppesica.maney.portfolio.dto.Portfolio;
+import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.user.dto.UserRegistrationDto;
 import com.giuseppesica.maney.user.service.UserService;
 import jakarta.transaction.Transactional;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.giuseppesica.maney.user.domain.User;
+import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.dto.UserResponseDto;
 
 @RestController

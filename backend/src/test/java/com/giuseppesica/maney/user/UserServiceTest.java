@@ -1,7 +1,7 @@
 package com.giuseppesica.maney.user;
 
-import com.giuseppesica.maney.user.domain.User;
-import com.giuseppesica.maney.user.domain.UserRepository;
+import com.giuseppesica.maney.user.model.User;
+import com.giuseppesica.maney.user.model.UserRepository;
 import com.giuseppesica.maney.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

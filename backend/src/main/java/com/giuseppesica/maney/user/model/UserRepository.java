@@ -1,4 +1,4 @@
-package com.giuseppesica.maney.user.domain;
+package com.giuseppesica.maney.user.model;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -19,7 +19,6 @@ import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.dto.UserResponseDto;
 
 @RestController
-@RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -31,10 +30,12 @@ public class UserController {
      * @param loginDto the login credentials (email and password)
      * @return authenticated user information
      */
-    @PostMapping("/login")
+    @PostMapping("/api/login")
     public ResponseEntity<UserResponseDto> login(
             @Valid @RequestBody UserLoginDto loginDto) {
+        logger.info("POST /api/login - user attempting login with email: {}", loginDto.getEmail());
         User user = userService.authenticate(loginDto.getEmail(), loginDto.getPassword());
+        logger.info("Login successful for user: {}", user.getId());
         return ResponseEntity.ok(new UserResponseDto(user));
     }
 
@@ -43,17 +44,24 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/register")
+    /**
+     * Registers a new user account.
+     * Creates a new user and associated portfolio.
+     *
+     * @param registrationDto the registration data
+     * @return created user information
+     */
+    @PostMapping("/api/register")
     @Transactional
-    public ResponseEntity<UserResponseDto> registration(
+    public ResponseEntity<UserResponseDto> register(
             @Valid @RequestBody UserRegistrationDto registrationDto) {
-        logger.info("Registering user with email: {}", registrationDto.getEmail());
+        logger.info("POST /api/register - new user registration with email: {}", registrationDto.getEmail());
         User user = userService.register(
                 registrationDto.getUsername(),
                 registrationDto.getEmail(),
                 registrationDto.getPassword()
         );
-        logger.info("User registered with ID: {}", user.getId());
+        logger.info("User registered successfully with ID: {}", user.getId());
         Portfolio portfolio = new Portfolio();
         user.setPortfolio(portfolio);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponseDto(user));

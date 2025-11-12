@@ -1,77 +1,87 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
 import type {LoginRequest} from '../types/auth';
-import '../styles/LoginPage.css';
+import '../styles/AuthPage.css';
 
 export function LoginPage() {
-    const navigate = useNavigate();
-    const [credentials, setCredentials] = useState<LoginRequest>({
-        username: '',
-        password: '',
-    });
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [credentials, setCredentials] = useState<LoginRequest>({
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setCredentials(prev => ({ ...prev, [name]: value }));
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({ ...prev, [name]: value }));
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-        try {
-            await authService.login(credentials);
-            navigate('/dashboard');
-        } catch (err) {
-            setError('Invalid username or password');
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      await authService.login(credentials);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Username o password non validi');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="login-container">
-            <form onSubmit={handleSubmit} className="login-form">
-                <h1>Maney - Login</h1>
+  return (
+    <div className="auth-page">
+      <div className="auth-container">
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-header">
+            <h1>Benvenuto</h1>
+            <p>Accedi al tuo account Maney</p>
+          </div>
 
-                <div className="form-group">
-                    <label htmlFor="username">Username</label>
-                    <input
-                        id="username"
-                        type="text"
-                        name="username"
-                        value={credentials.username}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              value={credentials.email}
+              onChange={handleChange}
+              placeholder="Inserisci la tua email"
+              required
+              autoComplete="email"
+            />
+          </div>
 
-                <div className="form-group">
-                    <label htmlFor="password">Password</label>
-                    <input
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={credentials.password}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              value={credentials.password}
+              onChange={handleChange}
+              placeholder="Inserisci la tua password"
+              required
+              autoComplete="current-password"
+            />
+          </div>
 
-                {error && <div className="error">{error}</div>}
+          {error && <div className="alert alert-error">{error}</div>}
 
-                <button type="submit" disabled={loading}>
-                    {loading ? 'Logging in...' : 'Login'}
-                </button>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Accesso in corso...' : 'Accedi'}
+          </button>
 
-                <p className="register-link">
-                    Non hai un account? <a href="/register">Registrati qui</a>
-                </p>
-            </form>
-        </div>
-    );
+          <div className="form-footer">
+            <p>Non hai un account? <Link to="/register">Registrati qui</Link></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
+

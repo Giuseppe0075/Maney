@@ -1,6 +1,8 @@
 package com.giuseppesica.maney.user.service;
 
 import com.giuseppesica.maney.user.model.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     public UserService(UserRepository userRepository,
@@ -31,6 +34,7 @@ public class UserService {
     public User register(String username, String email,
                          String plainPassword) {
         if (userRepository.existsByEmail(email)) {
+            logger.error("Attempted to register with an email that is already in use: {}", email);
             throw new IllegalArgumentException("Email already in use");
         }
 
@@ -39,7 +43,7 @@ public class UserService {
         user.setUsername(username);
         user.setEmail(email);
         user.setPasswordHash(hash);
-
+        logger.info("Registering new user with email: {}", email);
         return userRepository.save(user);
     }
 
@@ -77,5 +81,23 @@ public class UserService {
      */
     public boolean usernameExists(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    /**
+     * Authenticate a user with email and password.
+     * @param email the user's email
+     * @param plainPassword the user's plain text password
+     * @return the authenticated User if credentials are correct
+     * @throws IllegalArgumentException if email not found or password is incorrect
+     */
+    public User authenticate(String email, String plainPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!passwordEncoder.matches(plainPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Invalid password");
+        }
+
+        return user;
     }
 }

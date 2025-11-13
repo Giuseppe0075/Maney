@@ -11,14 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.dto.UserResponseDto;
 
 @RestController
+@RequestMapping("/user")
 public class UserController {
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -30,7 +28,7 @@ public class UserController {
      * @param loginDto the login credentials (email and password)
      * @return authenticated user information
      */
-    @PostMapping("/api/login")
+    @PostMapping("/login")
     public ResponseEntity<UserResponseDto> login(
             @Valid @RequestBody UserLoginDto loginDto) {
         logger.info("POST /api/login - user attempting login with email: {}", loginDto.getEmail());
@@ -51,7 +49,7 @@ public class UserController {
      * @param registrationDto the registration data
      * @return created user information
      */
-    @PostMapping("/api/register")
+    @PostMapping("/register")
     @Transactional
     public ResponseEntity<UserResponseDto> register(
             @Valid @RequestBody UserRegistrationDto registrationDto) {

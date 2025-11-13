@@ -2,7 +2,6 @@ package com.giuseppesica.maney.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,11 +14,16 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Security configuration for REST API.
- * Minimal and clean filterchain for authentication and authorization.
  *
  * URL Structure:
- * - Public layer: /login, /register, /homepage
- * - Authenticated layer: /user/* (user/portfolio, user/portfolio/asset, etc.)
+ * - /user/login → Pubblico
+ * - /user/register → Pubblico
+ * - /api/** → Pubblico (utilities come /api/csrf)
+ * - /user/** → Privato (richiede autenticazione)
+ *
+ * Authorization:
+ * - Accesso senza autenticazione a endpoint privati → Redirect a /login
+ * - Accesso a risorse di altri utenti → 404 Not Found
  */
 @Configuration
 public class SecurityConfig {
@@ -38,41 +42,38 @@ public class SecurityConfig {
         log.info("[SECURITY] Initializing SecurityFilterChain");
 
         http
-            // Enable CORS from configured origins
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
-            // CSRF protection with token repository
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                // Ignore CSRF for public endpoints (registration and login)
-                .ignoringRequestMatchers(
-                    "POST /api/login",
-                    "POST /api/register"
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .ignoringRequestMatchers("/user/login", "/user/register")
                 )
-            )
 
-            // Authorization rules
-            .authorizeHttpRequests(auth -> auth
-                // Public layer - accessible without authentication
-                .requestMatchers("GET /api/csrf").permitAll()
-                .requestMatchers("POST /api/login").permitAll()
-                .requestMatchers("POST /api/register").permitAll()
-                .requestMatchers("GET /api/homepage").permitAll()
-                .requestMatchers("/", "/index.html", "/favicon.ico").permitAll()
-                .requestMatchers("/public/**").permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        // Pubblici: login, register e tutto sotto /api
+                        .requestMatchers("/user/login", "/user/register").permitAll()
+                        .requestMatchers("/api/**").permitAll()
 
-                // Authenticated layer - requires authentication
-                .requestMatchers("/api/user/**").authenticated()
+                        // Privati: tutto il resto sotto /user
+                        .requestMatchers("/user/**").authenticated()
 
-                // Default: deny all other requests
-                .anyRequest().authenticated()
-            )
+                        // Risorse statiche
+                        .requestMatchers("/", "/index.html", "/favicon.ico", "/public/**").permitAll()
 
-            // Disable form login (this is a REST API, not a web app)
-            .formLogin(AbstractHttpConfigurer::disable)
+                        // Default: richiede autenticazione
+                        .anyRequest().authenticated()
+                )
 
-            // Use HTTP Basic authentication
-            .httpBasic(basic -> basic.realmName("Maney API"));
+                // Redirect a /login se non autenticato
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            log.warn("[SECURITY] Unauthorized access to {} - Redirecting to /login", request.getRequestURI());
+                            response.sendRedirect("/login");
+                        })
+                )
+
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(basic -> basic.realmName("Maney API"));
 
         log.info("[SECURITY] SecurityFilterChain initialized successfully");
 

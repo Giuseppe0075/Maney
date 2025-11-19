@@ -1,5 +1,6 @@
 package com.giuseppesica.maney.portfolio.service;
 
+import com.giuseppesica.maney.illiquidasset.model.IlliquidAssetRepository;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.portfolio.model.PortfolioRepository;
 import com.giuseppesica.maney.user.model.User;
@@ -21,11 +22,13 @@ public class PortfolioService {
     private static final Logger logger = LoggerFactory.getLogger(PortfolioService.class);
     private final PortfolioRepository portfolioRepository;
     private final UserRepository userRepository;
+    private final IlliquidAssetRepository illiquidAssetRepository;
 
     @Autowired
-    public PortfolioService(PortfolioRepository portfolioRepository, UserRepository userRepository) {
+    public PortfolioService(PortfolioRepository portfolioRepository, UserRepository userRepository, IlliquidAssetRepository illiquidAssetRepository) {
         this.portfolioRepository = portfolioRepository;
         this.userRepository = userRepository;
+        this.illiquidAssetRepository = illiquidAssetRepository;
     }
 
     /**
@@ -91,5 +94,9 @@ public class PortfolioService {
 
     public Optional<Portfolio> findById(Long portfolioId) {
         return portfolioRepository.findById(portfolioId);
+    }
+
+    public Optional<Portfolio> findByUserId(Long userId) {
+        return portfolioRepository.findByUserId(userId);
     }
 }

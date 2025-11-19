@@ -4,6 +4,7 @@ import com.giuseppesica.maney.user.model.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.giuseppesica.maney.user.model.User;
@@ -99,5 +100,13 @@ public class UserService {
         }
 
         return user;
+    }
+
+    public User UserFromAuthentication(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalArgumentException("User is not authenticated");
+        }
+        Optional<User> user = userRepository.findByEmail(authentication.getName());
+        return user.orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 }

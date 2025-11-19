@@ -6,7 +6,6 @@ import lombok.*;
 @Getter
 @Setter
 @NoArgsConstructor
-@RequiredArgsConstructor
 @AllArgsConstructor
 public class IlliquidAssetDto {
     private Long id;

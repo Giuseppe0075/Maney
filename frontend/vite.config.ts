@@ -1,19 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  server: {
-    proxy: {
-      '/users': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      }
-    }
-  }
+    plugins: [react()],
+    server: {
+        port: 5176,
+        proxy: {
+            // Inoltra le richieste che iniziano con /user al backend
+            '/user': {
+                target: 'http://localhost:8080',
+                changeOrigin: true,
+                secure: false,
+            },
+            // Inoltra le richieste di login (usato per i redirect di Spring Security)
+            '/login': {
+                target: 'http://localhost:8080',
+                changeOrigin: true,
+                secure: false,
+            },
+        },
+    },
 })

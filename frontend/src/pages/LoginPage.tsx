@@ -25,7 +25,7 @@ export function LoginPage() {
 
     try {
       await authService.login(credentials);
-      navigate('/dashboard');
+      navigate('/user/portfolio');
     } catch (err) {
       setError('Username o password non validi');
     } finally {

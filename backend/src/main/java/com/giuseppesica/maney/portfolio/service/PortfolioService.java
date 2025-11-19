@@ -88,4 +88,8 @@ public class PortfolioService {
             logger.info("Portfolio deleted for user: {}", email);
         }
     }
+
+    public Optional<Portfolio> findById(Long portfolioId) {
+        return portfolioRepository.findById(portfolioId);
+    }
 }

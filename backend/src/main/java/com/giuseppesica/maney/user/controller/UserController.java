@@ -1,9 +1,13 @@
 package com.giuseppesica.maney.user.controller;
 
+import com.giuseppesica.maney.portfolio.dto.PortfolioDto;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
+import com.giuseppesica.maney.portfolio.service.PortfolioService;
 import com.giuseppesica.maney.user.dto.UserRegistrationDto;
 import com.giuseppesica.maney.user.dto.UserLoginDto;
 import com.giuseppesica.maney.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -11,15 +15,32 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.dto.UserResponseDto;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private final PortfolioService portfolioService;
+
+    @Autowired
+    public UserController(UserService userService, PortfolioService portfolioService) {
+        this.userService = userService;
+        this.portfolioService = portfolioService;
+    }
+
 
     /**
      * Authenticates a user and initiates a session.
@@ -29,18 +50,29 @@ public class UserController {
      * @return authenticated user information
      */
     @PostMapping("/login")
-    public ResponseEntity<UserResponseDto> login(
-            @Valid @RequestBody UserLoginDto loginDto) {
-        logger.info("POST /api/login - user attempting login with email: {}", loginDto.getEmail());
+    public ResponseEntity<UserResponseDto> login(@Valid @RequestBody UserLoginDto loginDto,
+                                                 HttpServletRequest request,
+                                                 HttpServletResponse response) {
+        logger.info("POST /user/login - email={}", loginDto.getEmail());
         User user = userService.authenticate(loginDto.getEmail(), loginDto.getPassword());
-        logger.info("Login successful for user: {}", user.getId());
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                user.getEmail(),
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        request.getSession(true); // forza sessione
+        new HttpSessionSecurityContextRepository().saveContext(context, request, response);
+
+        logger.info("Login OK - session id={}", request.getSession(false).getId());
         return ResponseEntity.ok(new UserResponseDto(user));
     }
 
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     /**
      * Registers a new user account.
@@ -53,7 +85,7 @@ public class UserController {
     @Transactional
     public ResponseEntity<UserResponseDto> register(
             @Valid @RequestBody UserRegistrationDto registrationDto) {
-        logger.info("POST /api/register - new user registration with email: {}", registrationDto.getEmail());
+        logger.info("POST /user/register - new user registration with email: {}", registrationDto.getEmail());
         User user = userService.register(
                 registrationDto.getUsername(),
                 registrationDto.getEmail(),
@@ -63,5 +95,26 @@ public class UserController {
         Portfolio portfolio = new Portfolio();
         user.setPortfolio(portfolio);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponseDto(user));
+    }
+
+    @GetMapping("/portfolio")
+    public ResponseEntity<PortfolioDto> getPortfolio(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+
+        String email = authentication.getName();
+        logger.info("GET /user/portfolio - fetching portfolio for user: {}", email);
+        User user= userService.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (user.getPortfolio() == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found for user: " + email);
+        }
+
+        Long portfolioId = user.getPortfolio().getId();
+        Portfolio portfolio = portfolioService.findById(portfolioId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        PortfolioDto portfolioDto = new PortfolioDto(portfolio);
+        return ResponseEntity.ok(portfolioDto);
+
     }
 }

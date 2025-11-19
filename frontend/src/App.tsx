@@ -3,6 +3,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { Header } from './components/Header';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { PortfolioPage } from './pages/PortfolioPage';
 import './App.css';
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
                 <Header />
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/user/portfolio" element={<PortfolioPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/" element={<Navigate to="/login" replace />} />
                 </Routes>

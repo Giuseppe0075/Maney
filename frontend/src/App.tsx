@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { PortfolioPage } from './pages/PortfolioPage';
+import { HomePage } from './pages/HomePage';
 import './App.css';
 
 function App() {
@@ -12,10 +13,13 @@ function App() {
             <BrowserRouter>
                 <Header />
                 <Routes>
+                    <Route path="/homepage" element={<HomePage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/user/portfolio" element={<PortfolioPage />} />
                     <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/" element={<Navigate to="/login" replace />} />
+                    {/* Landing del sito */}
+                    <Route path="/" element={<Navigate to="/homepage" replace />} />
+                    {/* eventuale fallback 404 in futuro */}
                 </Routes>
             </BrowserRouter>
         </ThemeProvider>

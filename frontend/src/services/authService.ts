@@ -1,7 +1,24 @@
-// typescript
+import type { LoginRequest, RegisterRequest, User } from '../types/auth';
+
 const BASE = 'http://localhost:8080';
 
-type CsrfResponse = Record<string, any>;
+type CsrfResponse = Record<string, unknown>;
+
+function getStoredUser(): User | null {
+    const raw = localStorage.getItem('user');
+    return raw ? (JSON.parse(raw) as User) : null;
+}
+
+async function handleUnauthorized() {
+    const user = getStoredUser();
+    if (typeof window !== 'undefined') {
+        if (user) {
+            window.location.href = '/user/portfolio';
+        } else {
+            window.location.href = '/login';
+        }
+    }
+}
 
 async function fetchCsrfToken(): Promise<string | null> {
     try {
@@ -12,15 +29,15 @@ async function fetchCsrfToken(): Promise<string | null> {
         });
         if (!res.ok) return null;
         const data: CsrfResponse = await res.json();
-        // Provo diversi possibili nomi di proprietà
-        return data.token ?? data.csrfToken ?? data._csrf?.token ?? null;
+        const anyData = data as any;
+        return anyData.token ?? anyData.csrfToken ?? anyData._csrf?.token ?? null;
     } catch {
         return null;
     }
 }
 
 export const authService = {
-    login: async (credentials: { email: string; password: string }) => {
+    login: async (credentials: LoginRequest): Promise<User> => {
         const csrf = await fetchCsrfToken();
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (csrf) headers['X-CSRF-TOKEN'] = csrf;
@@ -32,14 +49,19 @@ export const authService = {
             body: JSON.stringify(credentials),
         });
 
-        if (!response.ok) throw new Error('Login failed');
+        if (response.status === 401) {
+            await handleUnauthorized();
+            throw new Error('Non autorizzato');
+        }
 
-        const user = await response.json();
+        if (!response.ok) throw new Error('Login non riuscito');
+
+        const user: User = await response.json();
         localStorage.setItem('user', JSON.stringify(user));
         return user;
     },
 
-    register: async (data: { username: string; email: string; password: string }) => {
+    register: async (data: RegisterRequest): Promise<User> => {
         const csrf = await fetchCsrfToken();
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (csrf) headers['X-CSRF-TOKEN'] = csrf;
@@ -51,11 +73,16 @@ export const authService = {
             body: JSON.stringify(data),
         });
 
-        if (!response.ok) throw new Error('Registration failed');
+        if (response.status === 401) {
+            await handleUnauthorized();
+            throw new Error('Non autorizzato');
+        }
+
+        if (!response.ok) throw new Error('Registrazione non riuscita');
         return response.json();
     },
 
-    logout: async () => {
+    logout: async (): Promise<void> => {
         const csrf = await fetchCsrfToken();
         const headers: Record<string, string> = {};
         if (csrf) headers['X-CSRF-TOKEN'] = csrf;
@@ -77,6 +104,7 @@ export const authService = {
         });
 
         if (response.status === 401 || response.status === 403) {
+            await handleUnauthorized();
             throw new Error('Non autenticato');
         }
         if (response.status === 404) {
@@ -89,8 +117,7 @@ export const authService = {
         return response.json();
     },
 
-    getCurrentUser: () => {
-        const raw = localStorage.getItem('user');
-        return raw ? JSON.parse(raw) : null;
+    getCurrentUser: (): User | null => {
+        return getStoredUser();
     },
 };

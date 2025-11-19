@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
-import type {LoginRequest} from '../types/auth';
+import type { LoginRequest } from '../types/auth';
 import '../styles/AuthPage.css';
 
 export function LoginPage() {
@@ -10,7 +10,7 @@ export function LoginPage() {
     email: '',
     password: '',
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,7 +20,7 @@ export function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(null);
     setLoading(true);
 
     try {
@@ -84,4 +84,3 @@ export function LoginPage() {
     </div>
   );
 }
-

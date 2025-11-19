@@ -34,7 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/user/login", "/user/register").permitAll()
                         .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/user/**").authenticated()
-                        .requestMatchers("/", "/index.html", "/favicon.ico", "/public/**").permitAll()
+                        .requestMatchers("/", "/homepage", "/favicon.ico", "/public/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

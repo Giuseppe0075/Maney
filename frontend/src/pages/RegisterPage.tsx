@@ -1,24 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
+import type { RegisterRequest } from '../types/auth';
 import '../styles/AuthPage.css';
 
-interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
+interface RegisterForm extends RegisterRequest {
   confirmPassword: string;
 }
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<RegisterRequest>({
+  const [formData, setFormData] = useState<RegisterForm>({
     username: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,7 +26,7 @@ export function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError(null);
 
     // Validazione
     if (formData.password !== formData.confirmPassword) {
@@ -136,4 +134,3 @@ export function RegisterPage() {
     </div>
   );
 }
-

@@ -7,18 +7,16 @@ export default defineConfig({
     server: {
         port: 5176,
         proxy: {
-            // Inoltra le richieste che iniziano con /user al backend
-            '/user': {
-                target: 'http://localhost:8080',
-                changeOrigin: true,
-                secure: false,
-            },
-            // Inoltra le richieste di login (usato per i redirect di Spring Security)
-            '/login': {
-                target: 'http://localhost:8080',
-                changeOrigin: true,
-                secure: false,
-            },
+            // In questa fase NON proxiemo le route applicative come /login o /user/*:
+            // sono gestite dal router React nel frontend.
+            // Se in futuro vorrai usare percorsi relativi per le API (es. /api/*),
+            // potrai aggiungere solo quel prefisso qui.
+            // Esempio:
+            // '/api': {
+            //   target: 'http://localhost:8080',
+            //   changeOrigin: true,
+            //   secure: false,
+            // },
         },
     },
 })

@@ -5,7 +5,6 @@ import '../styles/AuthPage.css';
 
 interface Portfolio {
     id: number;
-    // altri campi se presenti
 }
 
 export function PortfolioPage() {

@@ -66,7 +66,7 @@ public class UserController {
         context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
 
-        request.getSession(true); // forza sessione
+        request.getSession(true);
         new HttpSessionSecurityContextRepository().saveContext(context, request, response);
 
         logger.info("Login OK - session id={}", request.getSession(false).getId());
@@ -99,16 +99,16 @@ public class UserController {
 
     @GetMapping("/portfolio")
     public ResponseEntity<PortfolioDto> getPortfolio(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        User user;
+        try{
+            user = userService.UserFromAuthentication(authentication);
+        }
+        catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
-        String email = authentication.getName();
-        logger.info("GET /user/portfolio - fetching portfolio for user: {}", email);
-        User user= userService.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
         if (user.getPortfolio() == null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found for user: " + email);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found for user: " + authentication.getName());
         }
 
         Long portfolioId = user.getPortfolio().getId();

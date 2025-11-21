@@ -51,4 +51,8 @@ public class IlliquidAssetService {
 
         return Optional.of(illiquidAssetRepository.save(asset));
     }
+
+    public void deleteIlliquidAsset(IlliquidAsset illiquidAsset) {
+        illiquidAssetRepository.delete(illiquidAsset);
+    }
 }

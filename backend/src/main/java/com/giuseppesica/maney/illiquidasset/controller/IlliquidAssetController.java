@@ -101,4 +101,29 @@ public class IlliquidAssetController {
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(404).build());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteIlliquidAsset(
+            Authentication authentication,
+            @PathVariable("id") Long assetId) {
+        User user;
+        try {
+            user = userService.UserFromAuthentication(authentication);
+        } catch (Exception e) {
+            return ResponseEntity.status(404).build();
+        }
+        Optional<Portfolio> portfolio = portfolioService.findByUserId(user.getId());
+        if (portfolio.isEmpty()) {
+            return ResponseEntity.status(404).build();
+        }
+        Optional<IlliquidAsset> existingAsset = illiquidAssetService.getIlliquidAssetById(
+                portfolio.get().getId(),
+                assetId
+        );
+        if (existingAsset.isEmpty()) {
+            return ResponseEntity.status(404).build();
+        }
+        illiquidAssetService.deleteIlliquidAsset(existingAsset.get());
+        return ResponseEntity.status(204).build();
+    }
 }

@@ -25,6 +25,7 @@ export function IlliquidAssetPage() {
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState<boolean>(isNewAsset); // New assets start in edit mode
     const [isSaving, setIsSaving] = useState<boolean>(false);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
     // Form data state
     const [formData, setFormData] = useState<IlliquidAssetDto>({
@@ -170,6 +171,61 @@ export function IlliquidAssetPage() {
         }
     };
 
+    /**
+     * Handles deleting the asset.
+     * Asks for confirmation, fetches CSRF token, sends DELETE request, and navigates back to portfolio.
+     */
+    const handleDelete = async () => {
+        // Confirm deletion
+        if (!window.confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
+            return;
+        }
+
+        setIsDeleting(true);
+        setError(null);
+
+        try {
+            // Fetch CSRF token for security
+            const csrfToken = await fetchCsrfToken();
+
+            // Prepare headers with CSRF token
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+            };
+            if (csrfToken) {
+                headers['X-XSRF-TOKEN'] = csrfToken;
+            }
+
+            // Send DELETE request to backend
+            const response = await fetch(`http://localhost:8080/user/illiquid-asset/${id}`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers,
+            });
+
+            // Handle authentication errors
+            if (!response.ok) {
+                if (response.status === 401) {
+                    navigate('/login');
+                    return;
+                }
+                if (response.status === 404) {
+                    setError('Asset not found');
+                    return;
+                }
+                setError('Failed to delete asset');
+                return;
+            }
+
+            // Navigate back to portfolio after successful deletion
+            navigate('/user/portfolio');
+        } catch (err: any) {
+            setError(err.message ?? 'An error occurred while deleting the asset.');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     if (loading) {
         return <div className="auth-container">Loading...</div>;
     }
@@ -272,12 +328,26 @@ export function IlliquidAssetPage() {
 
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
                     {!isEditing && !isNewAsset && (
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="btn btn-primary"
-                        >
-                            Modify
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="btn btn-primary"
+                            >
+                                Modify
+                            </button>
+
+                            <button
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="btn"
+                                style={{
+                                    background: '#ef4444',
+                                    color: 'white'
+                                }}
+                            >
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </>
                     )}
 
                     {isEditing && (

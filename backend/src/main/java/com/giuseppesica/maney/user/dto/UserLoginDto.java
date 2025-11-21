@@ -15,10 +15,16 @@ import lombok.Setter;
 @Setter
 public class UserLoginDto {
 
+    /**
+     * User's email address for authentication.
+     */
     @NotBlank
     @Email
     private String email;
 
+    /**
+     * User's password for authentication.
+     */
     @NotBlank
     private String password;
 }

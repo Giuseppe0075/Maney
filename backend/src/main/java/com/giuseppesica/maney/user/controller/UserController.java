@@ -30,6 +30,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * REST controller for user management.
+ * Handles user authentication, registration, and user-related operations.
+ */
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -38,6 +42,13 @@ public class UserController {
     private final PortfolioService portfolioService;
     private final IlliquidAssetService illiquidAssetService;
 
+    /**
+     * Constructor for dependency injection.
+     *
+     * @param userService Service for user operations
+     * @param portfolioService Service for portfolio operations
+     * @param illiquidAssetService Service for illiquid asset operations
+     */
     @Autowired
     public UserController(UserService userService, PortfolioService portfolioService, IlliquidAssetService illiquidAssetService) {
         this.userService = userService;
@@ -50,8 +61,10 @@ public class UserController {
      * Authenticates a user and initiates a session.
      * Spring Security handles session creation after successful authentication.
      *
-     * @param loginDto the login credentials (email and password)
-     * @return authenticated user information
+     * @param loginDto Login credentials (email and password)
+     * @param request HTTP servlet request
+     * @param response HTTP servlet response
+     * @return ResponseEntity with authenticated user information
      */
     @PostMapping("/login")
     public ResponseEntity<UserResponseDto> login(@Valid @RequestBody UserLoginDto loginDto,
@@ -60,16 +73,19 @@ public class UserController {
         logger.info("POST /user/login - email={}", loginDto.getEmail());
         User user = userService.authenticate(loginDto.getEmail(), loginDto.getPassword());
 
+        // Create authentication token
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 user.getEmail(),
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
 
+        // Set security context
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
 
+        // Save context in session
         request.getSession(true);
         new HttpSessionSecurityContextRepository().saveContext(context, request, response);
 
@@ -82,8 +98,8 @@ public class UserController {
      * Registers a new user account.
      * Creates a new user and associated portfolio.
      *
-     * @param registrationDto the registration data
-     * @return created user information
+     * @param registrationDto Registration data (username, email, password)
+     * @return ResponseEntity with created user information and status 201
      */
     @PostMapping("/register")
     @Transactional
@@ -96,6 +112,8 @@ public class UserController {
                 registrationDto.getPassword()
         );
         logger.info("User registered successfully with ID: {}", user.getId());
+
+        // Create portfolio for new user
         Portfolio portfolio = new Portfolio();
         user.setPortfolio(portfolio);
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponseDto(user));
@@ -103,13 +121,15 @@ public class UserController {
 
     /**
      * Retrieves the portfolio of the authenticated user.
+     * Includes all illiquid assets in the portfolio.
      *
-     * @param authentication the authentication object
-     * @return the user's portfolio
+     * @param authentication Spring Security authentication object
+     * @return ResponseEntity with PortfolioDto containing portfolio data and assets
+     * @throws ResponseStatusException if user or portfolio not found
      */
     @GetMapping("/portfolio")
     public ResponseEntity<PortfolioDto> getPortfolio(Authentication authentication) {
-        // Check for authentication
+        // Check for authentication and get user
         User user;
         try{
             user = userService.UserFromAuthentication(authentication);
@@ -129,7 +149,6 @@ public class UserController {
 
         // Retrieve the assets
         List<IlliquidAssetDto> illiquidAssetDtos = illiquidAssetService.getIlliquidAssets(portfolioId);
-
 
         // Create and return PortfolioDto
         PortfolioDto portfolioDto = new PortfolioDto(portfolio);

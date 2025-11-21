@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * REST controller for managing user portfolios.
+ * Handles HTTP requests related to portfolio data and its assets.
+ * All endpoints require user authentication.
+ */
 @Controller
 @RequestMapping("/user/portfolio")
 public class PortfolioController {
@@ -23,6 +28,13 @@ public class PortfolioController {
     private final IlliquidAssetService illiquidAssetService;
     private final UserService userService;
 
+    /**
+     * Constructor for dependency injection.
+     *
+     * @param portfolioService Service for portfolio operations
+     * @param illiquidAssetService Service for illiquid asset operations
+     * @param userService Service for user operations
+     */
     @Autowired
     public PortfolioController(PortfolioService portfolioService, IlliquidAssetService illiquidAssetService, UserService userService) {
         this.portfolioService = portfolioService;
@@ -30,6 +42,12 @@ public class PortfolioController {
         this.userService = userService;
     }
 
+    /**
+     * Retrieves all illiquid assets in the authenticated user's portfolio.
+     *
+     * @param authentication Spring Security authentication object
+     * @return ResponseEntity with list of IlliquidAssetDto, or 404 if user/portfolio not found
+     */
     @GetMapping("/illiquid-assets")
     public ResponseEntity<List<IlliquidAssetDto>> getIlliquidAssets(Authentication authentication) {
         User user;

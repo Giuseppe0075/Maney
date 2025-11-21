@@ -11,12 +11,22 @@ import com.giuseppesica.maney.user.model.User;
 
 import java.util.Optional;
 
+/**
+ * Service class for user management.
+ * Handles user registration, authentication, and user data retrieval.
+ */
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
+    /**
+     * Constructor for dependency injection.
+     *
+     * @param userRepository Repository for user data access
+     * @param passwordEncoder Encoder for password hashing
+     */
     @Autowired
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder) {
@@ -25,11 +35,13 @@ public class UserService {
     }
 
     /**
-     * Register a new user with the given username, email, and plain password.
+     * Registers a new user with the given username, email, and plain password.
+     * Hashes the password before storing it.
+     *
      * @param username the desired username
      * @param email the user's email
      * @param plainPassword the user's plain text password
-     * @return the registered User
+     * @return the registered User entity
      * @throws IllegalArgumentException if the email is already in use
      */
     public User register(String username, String email,
@@ -49,25 +61,28 @@ public class UserService {
     }
 
     /**
-     * Find a user by their email.
+     * Finds a user by their email.
+     *
      * @param email the email to search for
-     * @return an Optional containing the User if found, or empty if not found
+     * @return an Optional containing the User if found, empty otherwise
      */
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
     /**
-     * Find a user by their username.
+     * Finds a user by their username.
+     *
      * @param username the username to search for
-     * @return an Optional containing the User if found, or empty if not found
+     * @return an Optional containing the User if found, empty otherwise
      */
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
     /**
-     * Check if an email exists in the system.
+     * Checks if an email exists in the system.
+     *
      * @param email the email to check
      * @return true if the email exists, false otherwise
      */
@@ -76,7 +91,8 @@ public class UserService {
     }
 
     /**
-     * Check if a username exists in the system.
+     * Checks if a username exists in the system.
+     *
      * @param username the username to check
      * @return true if the username exists, false otherwise
      */
@@ -85,7 +101,9 @@ public class UserService {
     }
 
     /**
-     * Authenticate a user with email and password.
+     * Authenticates a user with email and password.
+     * Verifies the password hash matches the provided plain password.
+     *
      * @param email the user's email
      * @param plainPassword the user's plain text password
      * @return the authenticated User if credentials are correct
@@ -102,6 +120,14 @@ public class UserService {
         return user;
     }
 
+    /**
+     * Extracts a User entity from a Spring Security Authentication object.
+     * Uses the authenticated email (principal) to lookup the user.
+     *
+     * @param authentication Spring Security authentication object
+     * @return the User entity
+     * @throws IllegalArgumentException if authentication is null/invalid or user not found
+     */
     public User UserFromAuthentication(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalArgumentException("User is not authenticated");

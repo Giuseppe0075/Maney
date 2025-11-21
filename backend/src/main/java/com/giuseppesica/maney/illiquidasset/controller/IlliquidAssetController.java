@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
+/**
+ * REST controller for managing illiquid assets.
+ * Handles HTTP requests for creating, reading, updating, and deleting illiquid assets.
+ * All endpoints require user authentication and verify asset ownership.
+ */
 @Controller
 @RequestMapping("/user/illiquid-asset")
 public class IlliquidAssetController {
@@ -23,6 +28,13 @@ public class IlliquidAssetController {
     private final UserService userService;
     private final PortfolioService portfolioService;
 
+    /**
+     * Constructor for dependency injection.
+     *
+     * @param illiquidAssetService Service for illiquid asset operations
+     * @param userService Service for user operations
+     * @param portfolioService Service for portfolio operations
+     */
     @Autowired
     public IlliquidAssetController(IlliquidAssetService illiquidAssetService, UserService userService, PortfolioService portfolioService) {
         this.illiquidAssetService = illiquidAssetService;
@@ -30,6 +42,14 @@ public class IlliquidAssetController {
         this.portfolioService = portfolioService;
     }
 
+    /**
+     * Retrieves a specific illiquid asset by ID.
+     * Verifies that the asset belongs to the authenticated user's portfolio.
+     *
+     * @param authentication Spring Security authentication object
+     * @param assetId ID of the asset to retrieve
+     * @return ResponseEntity with IlliquidAssetDto if found, 404 otherwise
+     */
     @GetMapping("/{id}")
     public ResponseEntity<IlliquidAssetDto> getIlliquidAsset(Authentication authentication,
                                                              @PathVariable("id") Long assetId) {
@@ -50,6 +70,13 @@ public class IlliquidAssetController {
 
     }
 
+    /**
+     * Creates a new illiquid asset for the authenticated user.
+     *
+     * @param authentication Spring Security authentication object
+     * @param illiquidAssetDto DTO containing asset information
+     * @return ResponseEntity with created IlliquidAssetDto and status 201, or 404 if user/portfolio not found
+     */
     @PostMapping("")
     public ResponseEntity<IlliquidAssetDto> createIlliquidAsset(
             Authentication authentication,
@@ -72,6 +99,15 @@ public class IlliquidAssetController {
         return ResponseEntity.status(201).body(createdIlliquidAssetDto);
     }
 
+    /**
+     * Updates an existing illiquid asset.
+     * Verifies that the asset belongs to the authenticated user's portfolio.
+     *
+     * @param authentication Spring Security authentication object
+     * @param assetId ID of the asset to update
+     * @param illiquidAssetDto DTO containing updated asset information
+     * @return ResponseEntity with updated IlliquidAssetDto if successful, 404 otherwise
+     */
     @PutMapping("/{id}")
     public ResponseEntity<IlliquidAssetDto> updateIlliquidAsset(
             Authentication authentication,
@@ -102,6 +138,14 @@ public class IlliquidAssetController {
                 .orElseGet(() -> ResponseEntity.status(404).build());
     }
 
+    /**
+     * Deletes an illiquid asset.
+     * Verifies that the asset belongs to the authenticated user's portfolio before deletion.
+     *
+     * @param authentication Spring Security authentication object
+     * @param assetId ID of the asset to delete
+     * @return ResponseEntity with status 204 if successful, 404 if asset not found
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteIlliquidAsset(
             Authentication authentication,
@@ -112,10 +156,12 @@ public class IlliquidAssetController {
         } catch (Exception e) {
             return ResponseEntity.status(404).build();
         }
+
         Optional<Portfolio> portfolio = portfolioService.findByUserId(user.getId());
         if (portfolio.isEmpty()) {
             return ResponseEntity.status(404).build();
         }
+
         Optional<IlliquidAsset> existingAsset = illiquidAssetService.getIlliquidAssetById(
                 portfolio.get().getId(),
                 assetId
@@ -123,6 +169,7 @@ public class IlliquidAssetController {
         if (existingAsset.isEmpty()) {
             return ResponseEntity.status(404).build();
         }
+
         illiquidAssetService.deleteIlliquidAsset(existingAsset.get());
         return ResponseEntity.status(204).build();
     }

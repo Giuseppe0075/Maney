@@ -92,10 +92,22 @@ public class PortfolioService {
         }
     }
 
+    /**
+     * Finds a portfolio by its ID.
+     *
+     * @param portfolioId the portfolio ID
+     * @return Optional containing the portfolio if found
+     */
     public Optional<Portfolio> findById(Long portfolioId) {
         return portfolioRepository.findById(portfolioId);
     }
 
+    /**
+     * Finds a portfolio by user ID.
+     *
+     * @param userId the user ID
+     * @return Optional containing the portfolio if found
+     */
     public Optional<Portfolio> findByUserId(Long userId) {
         return portfolioRepository.findByUserId(userId);
     }

@@ -71,4 +71,34 @@ public class IlliquidAssetController {
         IlliquidAssetDto createdIlliquidAssetDto = new IlliquidAssetDto(illiquidAsset);
         return ResponseEntity.status(201).body(createdIlliquidAssetDto);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<IlliquidAssetDto> updateIlliquidAsset(
+            Authentication authentication,
+            @PathVariable("id") Long assetId,
+            @RequestBody IlliquidAssetDto illiquidAssetDto) {
+        User user;
+        try{
+            user = userService.UserFromAuthentication(authentication);
+        }
+        catch (Exception e){
+            return ResponseEntity.status(404).build();
+        }
+
+        Optional<Portfolio> portfolio = portfolioService.findByUserId(user.getId());
+        if (portfolio.isEmpty()) {
+            return ResponseEntity.status(404).build();
+        }
+
+        Optional<IlliquidAsset> updatedAsset = illiquidAssetService.updateIlliquidAsset(
+                portfolio.get().getId(),
+                assetId,
+                illiquidAssetDto
+        );
+
+        return updatedAsset
+                .map(IlliquidAssetDto::new)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(404).build());
+    }
 }

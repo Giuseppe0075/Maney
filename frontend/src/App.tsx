@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { PortfolioPage } from './pages/PortfolioPage';
 import { HomePage } from './pages/HomePage';
+import { IlliquidAssetPage } from './pages/IlliquidAssetPage';
 import './App.css';
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
                     <Route path="/homepage" element={<HomePage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/user/portfolio" element={<PortfolioPage />} />
+                    <Route path="/user/illiquid-asset/:id" element={<IlliquidAssetPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     {/* Landing del sito */}
                     <Route path="/" element={<Navigate to="/homepage" replace />} />

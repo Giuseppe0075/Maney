@@ -36,4 +36,19 @@ public class IlliquidAssetService {
         illiquidAsset.setPortfolio(portfolio);
         return illiquidAssetRepository.save(illiquidAsset);
     }
+
+    public Optional<IlliquidAsset> updateIlliquidAsset(Long portfolioId, Long assetId, IlliquidAssetDto illiquidAssetDto) {
+        Optional<IlliquidAsset> existingAsset = illiquidAssetRepository.findByIdAndPortfolioId(assetId, portfolioId);
+
+        if (existingAsset.isEmpty()) {
+            return Optional.empty();
+        }
+
+        IlliquidAsset asset = existingAsset.get();
+        asset.setName(illiquidAssetDto.getName());
+        asset.setDescription(illiquidAssetDto.getDescription());
+        asset.setEstimatedValue(illiquidAssetDto.getEstimatedValue());
+
+        return Optional.of(illiquidAssetRepository.save(asset));
+    }
 }

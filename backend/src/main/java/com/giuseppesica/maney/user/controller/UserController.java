@@ -157,4 +157,17 @@ public class UserController {
         return ResponseEntity.ok(portfolioDto);
 
     }
+
+    /**
+     * Handles IllegalArgumentException thrown by service methods.
+     * Returns 400 Bad Request with error message.
+     *
+     * @param e the exception thrown
+     * @return ResponseEntity with error message and status 400
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+        logger.warn("IllegalArgumentException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
 }

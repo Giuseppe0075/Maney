@@ -1,5 +1,7 @@
 package com.giuseppesica.maney.portfolio.controller;
 
+import com.giuseppesica.maney.account.dto.LiquidityAccountDto;
+import com.giuseppesica.maney.account.service.LiquidityAccountService;
 import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
@@ -27,6 +29,7 @@ public class PortfolioController {
     private final PortfolioService portfolioService;
     private final IlliquidAssetService illiquidAssetService;
     private final UserService userService;
+    private final LiquidityAccountService liquidityAccountService;
 
     /**
      * Constructor for dependency injection.
@@ -36,10 +39,20 @@ public class PortfolioController {
      * @param userService Service for user operations
      */
     @Autowired
-    public PortfolioController(PortfolioService portfolioService, IlliquidAssetService illiquidAssetService, UserService userService) {
+    public PortfolioController(PortfolioService portfolioService, IlliquidAssetService illiquidAssetService, UserService userService, LiquidityAccountService liquidityAccountService) {
         this.portfolioService = portfolioService;
         this.illiquidAssetService = illiquidAssetService;
         this.userService = userService;
+        this.liquidityAccountService = liquidityAccountService;
+    }
+
+    protected Portfolio getAuthenticatedUserPortfolio(Authentication authentication) throws Exception {
+        User user = userService.UserFromAuthentication(authentication);
+        Optional<Portfolio> portfolio = portfolioService.findByUserId(user.getId());
+        if (portfolio.isEmpty()) {
+            throw new Exception("Portfolio not found for user ID: " + user.getId());
+        }
+        return portfolio.get();
     }
 
     /**
@@ -50,23 +63,29 @@ public class PortfolioController {
      */
     @GetMapping("/illiquid-assets")
     public ResponseEntity<List<IlliquidAssetDto>> getIlliquidAssets(Authentication authentication) {
-        User user;
-        try{
-            user = userService.UserFromAuthentication(authentication);
-        }
-        catch (Exception e){
+        long portfolioId;
+        try {
+            portfolioId = getAuthenticatedUserPortfolio(authentication).getId();
+        }catch (Exception e){
             return ResponseEntity.status(404).build();
         }
-
-        Optional<Portfolio> portfolio= portfolioService.findByUserId(user.getId());
-        if (portfolio.isEmpty()) {
-            return ResponseEntity.status(404).build();
-        }
-
-        Long portfolioId = portfolio.get().getId();
         List<IlliquidAssetDto> illiquidAssets =
                 illiquidAssetService.getIlliquidAssets(portfolioId);
 
         return ResponseEntity.ok(illiquidAssets);
+    }
+
+    @GetMapping("/liquidity-accounts")
+    public ResponseEntity<List<LiquidityAccountDto>> getLiquidityAccounts(Authentication authentication) {
+        long portfolioId;
+        try {
+            portfolioId = getAuthenticatedUserPortfolio(authentication).getId();
+        }catch (Exception e){
+            return ResponseEntity.status(404).build();
+        }
+        List<LiquidityAccountDto> liquidityAccounts =
+                liquidityAccountService.getLiquidityAccounts(portfolioId);
+
+        return ResponseEntity.ok(liquidityAccounts);
     }
 }

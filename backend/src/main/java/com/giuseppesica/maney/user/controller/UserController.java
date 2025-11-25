@@ -1,5 +1,7 @@
 package com.giuseppesica.maney.user.controller;
 
+import com.giuseppesica.maney.account.dto.LiquidityAccountDto;
+import com.giuseppesica.maney.account.service.LiquidityAccountService;
 import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
 import com.giuseppesica.maney.portfolio.dto.PortfolioDto;
@@ -41,6 +43,7 @@ public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final PortfolioService portfolioService;
     private final IlliquidAssetService illiquidAssetService;
+    private final LiquidityAccountService liquidityAccountService;
 
     /**
      * Constructor for dependency injection.
@@ -50,10 +53,11 @@ public class UserController {
      * @param illiquidAssetService Service for illiquid asset operations
      */
     @Autowired
-    public UserController(UserService userService, PortfolioService portfolioService, IlliquidAssetService illiquidAssetService) {
+    public UserController(UserService userService, PortfolioService portfolioService, IlliquidAssetService illiquidAssetService, LiquidityAccountService liquidityAccountService) {
         this.userService = userService;
         this.portfolioService = portfolioService;
         this.illiquidAssetService = illiquidAssetService;
+        this.liquidityAccountService = liquidityAccountService;
     }
 
 
@@ -149,10 +153,12 @@ public class UserController {
 
         // Retrieve the assets
         List<IlliquidAssetDto> illiquidAssetDtos = illiquidAssetService.getIlliquidAssets(portfolioId);
+        List<LiquidityAccountDto> liquidityAccountDtos = liquidityAccountService.getLiquidityAccounts(portfolioId);
 
         // Create and return PortfolioDto
         PortfolioDto portfolioDto = new PortfolioDto(portfolio);
         portfolioDto.setIlliquidAssets(illiquidAssetDtos);
+        portfolioDto.setLiquidityAccounts(liquidityAccountDtos);
 
         return ResponseEntity.ok(portfolioDto);
 

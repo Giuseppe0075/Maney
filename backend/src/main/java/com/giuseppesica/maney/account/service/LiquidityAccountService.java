@@ -7,6 +7,8 @@ import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.portfolio.model.PortfolioRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class LiquidityAccountService {
 
@@ -26,5 +28,10 @@ public class LiquidityAccountService {
         LiquidityAccount liquidityAccount = new LiquidityAccount(dto);
         liquidityAccount.setPortfolio(portfolio);
         return liquidityAccountRepository.save(liquidityAccount);
+    }
+
+    public List<LiquidityAccountDto> getLiquidityAccounts(Long portfolioId) {
+        List<LiquidityAccount> accounts = liquidityAccountRepository.findByPortfolioId(portfolioId).stream().map(account -> (LiquidityAccount) account).toList();
+        return accounts.stream().map(LiquidityAccountDto::new).toList();
     }
 }

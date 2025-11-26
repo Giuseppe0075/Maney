@@ -1,10 +1,13 @@
 package com.giuseppesica.maney.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.giuseppesica.maney.account.service.LiquidityAccountService;
 import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.portfolio.service.PortfolioService;
+import com.giuseppesica.maney.security.AuthenticationHelper;
+import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.dto.UserLoginDto;
 import com.giuseppesica.maney.user.dto.UserRegistrationDto;
 import com.giuseppesica.maney.user.model.User;
@@ -21,7 +24,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -48,6 +50,12 @@ public class UserControllerTest {
 
     @MockitoBean
     private IlliquidAssetService illiquidAssetService;
+
+    @MockitoBean
+    private LiquidityAccountService liquidityAccountService;
+
+    @MockitoBean
+    private AuthenticationHelper authenticationHelper;
 
     private User user;
     private Portfolio portfolio;
@@ -140,7 +148,9 @@ public class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registrationDto)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Email already in use"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Email already in use"));
 
         verify(userService, times(1)).register(any(), any(), any());
     }
@@ -186,7 +196,9 @@ public class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginDto)))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Invalid password"));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Invalid password"));
 
         verify(userService, times(1)).authenticate(eq("john@example.com"), eq("wrongpassword"));
     }
@@ -235,9 +247,9 @@ public class UserControllerTest {
         asset1.setEstimatedValue(75000.0f);
         assets.add(asset1);
 
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
-        when(portfolioService.findById(1L)).thenReturn(Optional.of(portfolio));
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any())).thenReturn(portfolio);
         when(illiquidAssetService.getIlliquidAssets(1L)).thenReturn(assets);
+        when(liquidityAccountService.getLiquidityAccounts(1L)).thenReturn(new ArrayList<>());
 
         // When & Then
         mockMvc.perform(get("/user/portfolio")
@@ -248,46 +260,45 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.illiquidAssets[0].id").value(1))
                 .andExpect(jsonPath("$.illiquidAssets[0].name").value("Vintage Car"));
 
-        verify(userService, times(1)).UserFromAuthentication(any());
-        verify(portfolioService, times(1)).findById(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any());
         verify(illiquidAssetService, times(1)).getIlliquidAssets(1L);
+        verify(liquidityAccountService, times(1)).getLiquidityAccounts(1L);
     }
 
     @Test
     @WithMockUser(username = "john@example.com")
     public void testGetPortfolio_UserHasNoPortfolio_ReturnsNotFound() throws Exception {
         // Given
-        User userWithoutPortfolio = new User();
-        userWithoutPortfolio.setId(1L);
-        userWithoutPortfolio.setEmail("john@example.com");
-        userWithoutPortfolio.setPortfolio(null);
-
-        when(userService.UserFromAuthentication(any())).thenReturn(userWithoutPortfolio);
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any()))
+                .thenThrow(new NotFoundException("Portfolio not found for user: john@example.com"));
 
         // When & Then
         mockMvc.perform(get("/user/portfolio")
                         .with(csrf()))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Portfolio not found for user: john@example.com"));
 
-        verify(userService, times(1)).UserFromAuthentication(any());
-        verify(portfolioService, never()).findById(any());
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any());
         verify(illiquidAssetService, never()).getIlliquidAssets(any());
     }
 
     @Test
     @WithMockUser(username = "john@example.com")
     public void testGetPortfolio_PortfolioNotFoundInDb_ReturnsNotFound() throws Exception {
-        // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
-        when(portfolioService.findById(1L)).thenReturn(Optional.empty());
+        // Given - AuthenticationHelper throws NotFoundException when portfolio not found
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any()))
+                .thenThrow(new NotFoundException("Portfolio not found for user: john@example.com"));
 
         // When & Then
         mockMvc.perform(get("/user/portfolio")
                         .with(csrf()))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"));
 
-        verify(userService, times(1)).UserFromAuthentication(any());
-        verify(portfolioService, times(1)).findById(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any());
         verify(illiquidAssetService, never()).getIlliquidAssets(any());
     }
 

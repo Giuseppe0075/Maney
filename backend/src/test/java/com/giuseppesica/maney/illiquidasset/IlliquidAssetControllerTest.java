@@ -7,6 +7,8 @@ import com.giuseppesica.maney.illiquidasset.model.IlliquidAsset;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.portfolio.service.PortfolioService;
+import com.giuseppesica.maney.security.AuthenticationHelper;
+import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +53,9 @@ public class IlliquidAssetControllerTest {
     @MockitoBean
     private PortfolioService portfolioService;
 
+    @MockitoBean
+    private AuthenticationHelper authenticationHelper;
+
     private User testUser;
     private Portfolio testPortfolio;
     private IlliquidAsset testAsset;
@@ -68,6 +73,9 @@ public class IlliquidAssetControllerTest {
         testPortfolio.setId(1L);
         testPortfolio.setUser(testUser);
 
+        // Link portfolio to user
+        testUser.setPortfolio(testPortfolio);
+
         // Create test illiquid asset
         testAsset = new IlliquidAsset();
         testAsset.setId(1L);
@@ -81,8 +89,7 @@ public class IlliquidAssetControllerTest {
     @WithMockUser(username = "test@example.com")
     public void testGetIlliquidAsset_AssetExists_ReturnsAsset() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.of(testPortfolio));
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
         when(illiquidAssetService.getIlliquidAssetById(1L, 1L)).thenReturn(Optional.of(testAsset));
 
         // When & Then
@@ -95,8 +102,7 @@ public class IlliquidAssetControllerTest {
                 .andExpect(jsonPath("$.description").value("Downtown apartment"))
                 .andExpect(jsonPath("$.estimatedValue").value(250000.0));
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, times(1)).getIlliquidAssetById(1L, 1L);
     }
 
@@ -104,8 +110,7 @@ public class IlliquidAssetControllerTest {
     @WithMockUser(username = "test@example.com")
     public void testGetIlliquidAsset_AssetDoesNotExist_Returns404() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.of(testPortfolio));
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
         when(illiquidAssetService.getIlliquidAssetById(1L, 99L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -113,8 +118,7 @@ public class IlliquidAssetControllerTest {
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, times(1)).getIlliquidAssetById(1L, 99L);
     }
 
@@ -122,16 +126,15 @@ public class IlliquidAssetControllerTest {
     @WithMockUser(username = "test@example.com")
     public void testGetIlliquidAsset_UserNotFound_Returns404() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class)))
-                .thenThrow(new RuntimeException("User not found"));
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class)))
+                .thenThrow(new NotFoundException("User not found"));
 
         // When & Then
         mockMvc.perform(get("/user/illiquid-asset/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, never()).findByUserId(any());
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, never()).getIlliquidAssetById(any(), any());
     }
 
@@ -139,16 +142,15 @@ public class IlliquidAssetControllerTest {
     @WithMockUser(username = "test@example.com")
     public void testGetIlliquidAsset_PortfolioNotFound_Returns404() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.empty());
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class)))
+                .thenThrow(new NotFoundException("Portfolio not found"));
 
         // When & Then
         mockMvc.perform(get("/user/illiquid-asset/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, never()).getIlliquidAssetById(any(), any());
     }
 
@@ -165,8 +167,7 @@ public class IlliquidAssetControllerTest {
         createdAsset.setId(2L);
         createdAsset.setPortfolio(testPortfolio);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.of(testPortfolio));
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any(Authentication.class))).thenReturn(testPortfolio);
         when(illiquidAssetService.createIlliquidAsset(any(IlliquidAssetDto.class), eq(testPortfolio)))
                 .thenReturn(createdAsset);
 
@@ -182,8 +183,7 @@ public class IlliquidAssetControllerTest {
                 .andExpect(jsonPath("$.description").value("1967 Mustang"))
                 .andExpect(jsonPath("$.estimatedValue").value(75000.0));
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any(Authentication.class));
         verify(illiquidAssetService, times(1)).createIlliquidAsset(any(IlliquidAssetDto.class), eq(testPortfolio));
     }
 
@@ -196,8 +196,8 @@ public class IlliquidAssetControllerTest {
         newAssetDto.setDescription("1967 Mustang");
         newAssetDto.setEstimatedValue(75000.0f);
 
-        when(userService.UserFromAuthentication(any(Authentication.class)))
-                .thenThrow(new RuntimeException("User not found"));
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any(Authentication.class)))
+                .thenThrow(new NotFoundException("User not found"));
 
         // When & Then
         mockMvc.perform(post("/user/illiquid-asset")
@@ -206,8 +206,7 @@ public class IlliquidAssetControllerTest {
                         .content(objectMapper.writeValueAsString(newAssetDto)))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, never()).findByUserId(any());
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any(Authentication.class));
         verify(illiquidAssetService, never()).createIlliquidAsset(any(), any());
     }
 
@@ -220,8 +219,8 @@ public class IlliquidAssetControllerTest {
         newAssetDto.setDescription("1967 Mustang");
         newAssetDto.setEstimatedValue(75000.0f);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.empty());
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any(Authentication.class)))
+                .thenThrow(new NotFoundException("Portfolio not found"));
 
         // When & Then
         mockMvc.perform(post("/user/illiquid-asset")
@@ -230,8 +229,7 @@ public class IlliquidAssetControllerTest {
                         .content(objectMapper.writeValueAsString(newAssetDto)))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any(Authentication.class));
         verify(illiquidAssetService, never()).createIlliquidAsset(any(), any());
     }
 
@@ -251,8 +249,7 @@ public class IlliquidAssetControllerTest {
         updatedAsset.setEstimatedValue(300000.0f);
         updatedAsset.setPortfolio(testPortfolio);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.of(testPortfolio));
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
         when(illiquidAssetService.updateIlliquidAsset(eq(1L), eq(1L), any(IlliquidAssetDto.class)))
                 .thenReturn(Optional.of(updatedAsset));
 
@@ -268,8 +265,7 @@ public class IlliquidAssetControllerTest {
                 .andExpect(jsonPath("$.description").value("Renovated apartment"))
                 .andExpect(jsonPath("$.estimatedValue").value(300000.0));
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, times(1)).updateIlliquidAsset(eq(1L), eq(1L), any(IlliquidAssetDto.class));
     }
 
@@ -282,8 +278,7 @@ public class IlliquidAssetControllerTest {
         updateDto.setDescription("Description");
         updateDto.setEstimatedValue(100000.0f);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.of(testPortfolio));
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
         when(illiquidAssetService.updateIlliquidAsset(eq(1L), eq(99L), any(IlliquidAssetDto.class)))
                 .thenReturn(Optional.empty());
 
@@ -294,8 +289,7 @@ public class IlliquidAssetControllerTest {
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, times(1)).updateIlliquidAsset(eq(1L), eq(99L), any(IlliquidAssetDto.class));
     }
 
@@ -308,8 +302,8 @@ public class IlliquidAssetControllerTest {
         updateDto.setDescription("Description");
         updateDto.setEstimatedValue(100000.0f);
 
-        when(userService.UserFromAuthentication(any(Authentication.class)))
-                .thenThrow(new RuntimeException("User not found"));
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class)))
+                .thenThrow(new NotFoundException("User not found"));
 
         // When & Then
         mockMvc.perform(put("/user/illiquid-asset/{id}", 1L)
@@ -318,8 +312,7 @@ public class IlliquidAssetControllerTest {
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, never()).findByUserId(any());
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, never()).updateIlliquidAsset(any(), any(), any());
     }
 
@@ -332,8 +325,8 @@ public class IlliquidAssetControllerTest {
         updateDto.setDescription("Description");
         updateDto.setEstimatedValue(100000.0f);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.empty());
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class)))
+                .thenThrow(new NotFoundException("Portfolio not found"));
 
         // When & Then
         mockMvc.perform(put("/user/illiquid-asset/{id}", 1L)
@@ -342,8 +335,7 @@ public class IlliquidAssetControllerTest {
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, never()).updateIlliquidAsset(any(), any(), any());
     }
 
@@ -351,8 +343,7 @@ public class IlliquidAssetControllerTest {
     @WithMockUser(username = "test@example.com")
     public void testDeleteIlliquidAsset_Success_ReturnsNoContent() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.of(testPortfolio));
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
         when(illiquidAssetService.getIlliquidAssetById(1L, 1L)).thenReturn(Optional.of(testAsset));
         doNothing().when(illiquidAssetService).deleteIlliquidAsset(testAsset);
 
@@ -361,8 +352,7 @@ public class IlliquidAssetControllerTest {
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, times(1)).getIlliquidAssetById(1L, 1L);
         verify(illiquidAssetService, times(1)).deleteIlliquidAsset(testAsset);
     }
@@ -371,8 +361,7 @@ public class IlliquidAssetControllerTest {
     @WithMockUser(username = "test@example.com")
     public void testDeleteIlliquidAsset_AssetNotFound_Returns404() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.of(testPortfolio));
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
         when(illiquidAssetService.getIlliquidAssetById(1L, 99L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -380,8 +369,7 @@ public class IlliquidAssetControllerTest {
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, times(1)).getIlliquidAssetById(1L, 99L);
         verify(illiquidAssetService, never()).deleteIlliquidAsset(any());
     }
@@ -390,16 +378,15 @@ public class IlliquidAssetControllerTest {
     @WithMockUser(username = "test@example.com")
     public void testDeleteIlliquidAsset_UserNotFound_Returns404() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class)))
-                .thenThrow(new RuntimeException("User not found"));
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class)))
+                .thenThrow(new NotFoundException("User not found"));
 
         // When & Then
         mockMvc.perform(delete("/user/illiquid-asset/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, never()).findByUserId(any());
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, never()).getIlliquidAssetById(any(), any());
         verify(illiquidAssetService, never()).deleteIlliquidAsset(any());
     }
@@ -408,16 +395,15 @@ public class IlliquidAssetControllerTest {
     @WithMockUser(username = "test@example.com")
     public void testDeleteIlliquidAsset_PortfolioNotFound_Returns404() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.empty());
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class)))
+                .thenThrow(new NotFoundException("Portfolio not found"));
 
         // When & Then
         mockMvc.perform(delete("/user/illiquid-asset/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
-        verify(portfolioService, times(1)).findByUserId(1L);
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, never()).getIlliquidAssetById(any(), any());
         verify(illiquidAssetService, never()).deleteIlliquidAsset(any());
     }
@@ -435,8 +421,7 @@ public class IlliquidAssetControllerTest {
         createdAsset.setId(3L);
         createdAsset.setPortfolio(testPortfolio);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
-        when(portfolioService.findByUserId(1L)).thenReturn(Optional.of(testPortfolio));
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any(Authentication.class))).thenReturn(testPortfolio);
         when(illiquidAssetService.createIlliquidAsset(any(IlliquidAssetDto.class), eq(testPortfolio)))
                 .thenReturn(createdAsset);
 
@@ -460,8 +445,7 @@ public class IlliquidAssetControllerTest {
         mockMvc.perform(get("/user/illiquid-asset/{id}", 1L))
                 .andExpect(status().isUnauthorized());
 
-        verify(userService, never()).UserFromAuthentication(any());
-        verify(portfolioService, never()).findByUserId(any());
+        verify(authenticationHelper, never()).getAuthenticatedUserPortfolioId(any());
         verify(illiquidAssetService, never()).getIlliquidAssetById(any(), any());
     }
 
@@ -479,8 +463,7 @@ public class IlliquidAssetControllerTest {
                         .content(objectMapper.writeValueAsString(newAssetDto)))
                 .andExpect(status().isForbidden());
 
-        verify(userService, never()).UserFromAuthentication(any());
-        verify(portfolioService, never()).findByUserId(any());
+        verify(authenticationHelper, never()).getAuthenticatedUserPortfolio(any());
         verify(illiquidAssetService, never()).createIlliquidAsset(any(), any());
     }
 
@@ -498,8 +481,7 @@ public class IlliquidAssetControllerTest {
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isForbidden());
 
-        verify(userService, never()).UserFromAuthentication(any());
-        verify(portfolioService, never()).findByUserId(any());
+        verify(authenticationHelper, never()).getAuthenticatedUserPortfolioId(any());
         verify(illiquidAssetService, never()).updateIlliquidAsset(any(), any(), any());
     }
 
@@ -509,8 +491,7 @@ public class IlliquidAssetControllerTest {
         mockMvc.perform(delete("/user/illiquid-asset/{id}", 1L))
                 .andExpect(status().isForbidden());
 
-        verify(userService, never()).UserFromAuthentication(any());
-        verify(portfolioService, never()).findByUserId(any());
+        verify(authenticationHelper, never()).getAuthenticatedUserPortfolioId(any());
         verify(illiquidAssetService, never()).getIlliquidAssetById(any(), any());
         verify(illiquidAssetService, never()).deleteIlliquidAsset(any());
     }

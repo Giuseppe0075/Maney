@@ -8,6 +8,7 @@ import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.portfolio.service.PortfolioService;
 import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.security.NotFoundException;
+import com.giuseppesica.maney.user.controller.UserController;
 import com.giuseppesica.maney.user.dto.UserLoginDto;
 import com.giuseppesica.maney.user.dto.UserRegistrationDto;
 import com.giuseppesica.maney.user.model.User;
@@ -15,9 +16,7 @@ import com.giuseppesica.maney.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -33,9 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@WebMvcTest(UserController.class)
 public class UserControllerTest {
 
     @Autowired

@@ -7,6 +7,7 @@ import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
 import com.giuseppesica.maney.portfolio.dto.PortfolioDto;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.portfolio.service.PortfolioService;
+import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.user.dto.UserRegistrationDto;
 import com.giuseppesica.maney.user.dto.UserLoginDto;
 import com.giuseppesica.maney.user.service.UserService;
@@ -28,7 +29,6 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.web.bind.annotation.*;
 import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.dto.UserResponseDto;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -40,10 +40,12 @@ import java.util.List;
 @RequestMapping("/user")
 public class UserController {
     private final UserService userService;
-    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final PortfolioService portfolioService;
     private final IlliquidAssetService illiquidAssetService;
     private final LiquidityAccountService liquidityAccountService;
+    private final AuthenticationHelper authHelper;
+
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     /**
      * Constructor for dependency injection.
@@ -51,13 +53,22 @@ public class UserController {
      * @param userService Service for user operations
      * @param portfolioService Service for portfolio operations
      * @param illiquidAssetService Service for illiquid asset operations
+     * @param liquidityAccountService Service for liquidity account operations
+     * @param authHelper Helper for authentication operations
      */
     @Autowired
-    public UserController(UserService userService, PortfolioService portfolioService, IlliquidAssetService illiquidAssetService, LiquidityAccountService liquidityAccountService) {
+    public UserController(
+            UserService userService,
+            PortfolioService portfolioService,
+            IlliquidAssetService illiquidAssetService,
+            LiquidityAccountService liquidityAccountService,
+            AuthenticationHelper authHelper
+    ) {
         this.userService = userService;
         this.portfolioService = portfolioService;
         this.illiquidAssetService = illiquidAssetService;
         this.liquidityAccountService = liquidityAccountService;
+        this.authHelper = authHelper;
     }
 
 
@@ -125,33 +136,18 @@ public class UserController {
 
     /**
      * Retrieves the portfolio of the authenticated user.
-     * Includes all illiquid assets in the portfolio.
+     * Includes all illiquid assets and liquidity accounts in the portfolio.
      *
      * @param authentication Spring Security authentication object
      * @return ResponseEntity with PortfolioDto containing portfolio data and assets
-     * @throws ResponseStatusException if user or portfolio not found
      */
     @GetMapping("/portfolio")
     public ResponseEntity<PortfolioDto> getPortfolio(Authentication authentication) {
-        // Check for authentication and get user
-        User user;
-        try{
-            user = userService.UserFromAuthentication(authentication);
-        }
-        catch (Exception e){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
+        // Get authenticated user's portfolio using helper
+        Portfolio portfolio = authHelper.getAuthenticatedUserPortfolio(authentication);
+        Long portfolioId = portfolio.getId();
 
-        // Ensure the user has a portfolio
-        if (user.getPortfolio() == null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found for user: " + authentication.getName());
-        }
-
-        // Retrieve portfolio
-        Long portfolioId = user.getPortfolio().getId();
-        Portfolio portfolio = portfolioService.findById(portfolioId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        // Retrieve the assets
+        // Retrieve all assets
         List<IlliquidAssetDto> illiquidAssetDtos = illiquidAssetService.getIlliquidAssets(portfolioId);
         List<LiquidityAccountDto> liquidityAccountDtos = liquidityAccountService.getLiquidityAccounts(portfolioId);
 
@@ -161,19 +157,5 @@ public class UserController {
         portfolioDto.setLiquidityAccounts(liquidityAccountDtos);
 
         return ResponseEntity.ok(portfolioDto);
-
-    }
-
-    /**
-     * Handles IllegalArgumentException thrown by service methods.
-     * Returns 400 Bad Request with error message.
-     *
-     * @param e the exception thrown
-     * @return ResponseEntity with error message and status 400
-     */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        logger.warn("IllegalArgumentException: {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 }

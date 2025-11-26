@@ -4,9 +4,8 @@ import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.model.IlliquidAsset;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
-import com.giuseppesica.maney.portfolio.service.PortfolioService;
-import com.giuseppesica.maney.user.model.User;
-import com.giuseppesica.maney.user.service.UserService;
+import com.giuseppesica.maney.security.AuthenticationHelper;
+import com.giuseppesica.maney.security.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,21 +24,18 @@ import java.util.Optional;
 public class IlliquidAssetController {
 
     private final IlliquidAssetService illiquidAssetService;
-    private final UserService userService;
-    private final PortfolioService portfolioService;
+    private final AuthenticationHelper authenticationHelper;
 
     /**
      * Constructor for dependency injection.
      *
      * @param illiquidAssetService Service for illiquid asset operations
-     * @param userService Service for user operations
-     * @param portfolioService Service for portfolio operations
+     * @param authenticationHelper Helper for authentication operations
      */
     @Autowired
-    public IlliquidAssetController(IlliquidAssetService illiquidAssetService, UserService userService, PortfolioService portfolioService) {
+    public IlliquidAssetController(IlliquidAssetService illiquidAssetService, AuthenticationHelper authenticationHelper) {
         this.illiquidAssetService = illiquidAssetService;
-        this.userService = userService;
-        this.portfolioService = portfolioService;
+        this.authenticationHelper = authenticationHelper;
     }
 
     /**
@@ -53,21 +49,12 @@ public class IlliquidAssetController {
     @GetMapping("/{id}")
     public ResponseEntity<IlliquidAssetDto> getIlliquidAsset(Authentication authentication,
                                                              @PathVariable("id") Long assetId) {
-        User user;
-        try{
-            user = userService.UserFromAuthentication(authentication);
-        }
-        catch (Exception e){
-            return ResponseEntity.status(404).build();
-        }
+        long portfolioId = authenticationHelper.getAuthenticatedUserPortfolioId(authentication);
+        IlliquidAsset illiquidAsset = illiquidAssetService.getIlliquidAssetById(portfolioId, assetId)
+                .orElseThrow(() -> new NotFoundException("Illiquid Asset not found with ID: " + assetId));
 
-        Optional<Portfolio> portfolio= portfolioService.findByUserId(user.getId());
-        return portfolio.map(value -> illiquidAssetService
-                .getIlliquidAssetById(value.getId(), assetId)
-                .map(IlliquidAssetDto::new)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(404).build())).orElseGet(() -> ResponseEntity.status(404).build());
-
+        IlliquidAssetDto assetDto = new IlliquidAssetDto(illiquidAsset);
+        return ResponseEntity.ok(assetDto);
     }
 
     /**
@@ -75,26 +62,15 @@ public class IlliquidAssetController {
      *
      * @param authentication Spring Security authentication object
      * @param illiquidAssetDto DTO containing asset information
-     * @return ResponseEntity with created IlliquidAssetDto and status 201, or 404 if user/portfolio not found
+     * @return ResponseEntity with created IlliquidAssetDto and status 201
      */
     @PostMapping("")
     public ResponseEntity<IlliquidAssetDto> createIlliquidAsset(
             Authentication authentication,
             @RequestBody IlliquidAssetDto illiquidAssetDto) {
-        User user;
-        try{
-            user = userService.UserFromAuthentication(authentication);
-        }
-        catch (Exception e){
-            return ResponseEntity.status(404).build();
-        }
+        Portfolio portfolio = authenticationHelper.getAuthenticatedUserPortfolio(authentication);
 
-        Optional<Portfolio> portfolio= portfolioService.findByUserId(user.getId());
-        if (portfolio.isEmpty()) {
-            return ResponseEntity.status(404).build();
-        }
-
-        IlliquidAsset illiquidAsset = illiquidAssetService.createIlliquidAsset(illiquidAssetDto, portfolio.get());
+        IlliquidAsset illiquidAsset = illiquidAssetService.createIlliquidAsset(illiquidAssetDto, portfolio);
         IlliquidAssetDto createdIlliquidAssetDto = new IlliquidAssetDto(illiquidAsset);
         return ResponseEntity.status(201).body(createdIlliquidAssetDto);
     }
@@ -113,21 +89,10 @@ public class IlliquidAssetController {
             Authentication authentication,
             @PathVariable("id") Long assetId,
             @RequestBody IlliquidAssetDto illiquidAssetDto) {
-        User user;
-        try{
-            user = userService.UserFromAuthentication(authentication);
-        }
-        catch (Exception e){
-            return ResponseEntity.status(404).build();
-        }
-
-        Optional<Portfolio> portfolio = portfolioService.findByUserId(user.getId());
-        if (portfolio.isEmpty()) {
-            return ResponseEntity.status(404).build();
-        }
+        Long portfolioId = authenticationHelper.getAuthenticatedUserPortfolioId(authentication);
 
         Optional<IlliquidAsset> updatedAsset = illiquidAssetService.updateIlliquidAsset(
-                portfolio.get().getId(),
+                portfolioId,
                 assetId,
                 illiquidAssetDto
         );
@@ -135,7 +100,7 @@ public class IlliquidAssetController {
         return updatedAsset
                 .map(IlliquidAssetDto::new)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(404).build());
+                .orElseThrow(() -> new NotFoundException("Illiquid Asset not found with ID: " + assetId));
     }
 
     /**
@@ -150,24 +115,15 @@ public class IlliquidAssetController {
     public ResponseEntity<Void> deleteIlliquidAsset(
             Authentication authentication,
             @PathVariable("id") Long assetId) {
-        User user;
-        try {
-            user = userService.UserFromAuthentication(authentication);
-        } catch (Exception e) {
-            return ResponseEntity.status(404).build();
-        }
-
-        Optional<Portfolio> portfolio = portfolioService.findByUserId(user.getId());
-        if (portfolio.isEmpty()) {
-            return ResponseEntity.status(404).build();
-        }
+        Long portfolioId = authenticationHelper.getAuthenticatedUserPortfolioId(authentication);
 
         Optional<IlliquidAsset> existingAsset = illiquidAssetService.getIlliquidAssetById(
-                portfolio.get().getId(),
+                portfolioId,
                 assetId
         );
+
         if (existingAsset.isEmpty()) {
-            return ResponseEntity.status(404).build();
+            throw new NotFoundException("Illiquid Asset not found with ID: " + assetId);
         }
 
         illiquidAssetService.deleteIlliquidAsset(existingAsset.get());

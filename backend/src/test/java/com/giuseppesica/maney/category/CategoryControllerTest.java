@@ -8,7 +8,6 @@ import com.giuseppesica.maney.category.service.CategoryService;
 import com.giuseppesica.maney.config.CorsConfig;
 import com.giuseppesica.maney.config.SecurityConfig;
 import com.giuseppesica.maney.security.AuthenticationHelper;
-import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.service.UserService;
 import com.giuseppesica.maney.utils.CategoryType;
@@ -27,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;

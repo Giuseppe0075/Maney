@@ -12,17 +12,43 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST Controller for Category management.
+ * Provides endpoints for CRUD operations on user categories.
+ * All endpoints require authentication and operate only on the authenticated user's categories.
+ * Base path: /user/category
+ *
+ * @author Giuseppe Sica
+ * @version 1.0
+ * @since 2025-11-27
+ */
 @Controller
 @RequestMapping("/user/category")
 public class CategoryController {
     private final UserService userService;
     private final CategoryService categoryService;
 
+    /**
+     * Constructor for dependency injection.
+     *
+     * @param userService Service for user operations
+     * @param categoryService Service for category operations
+     */
     public CategoryController(UserService userService, CategoryService categoryService) {
         this.userService = userService;
         this.categoryService = categoryService;
     }
 
+    /**
+     * Creates a new category for the authenticated user.
+     * If parentId is provided, sets up the hierarchical relationship.
+     * Endpoint: POST /user/category
+     *
+     * @param authentication Spring Security authentication object containing user details
+     * @param categoryDto DTO containing category data (name, color, type, optional parentId)
+     * @return ResponseEntity with created CategoryDto and HTTP 200 OK
+     * @throws NotFoundException if parent category does not exist
+     */
     @PostMapping
     public ResponseEntity<CategoryDto> createCategory(
             Authentication authentication,
@@ -41,6 +67,16 @@ public class CategoryController {
         return ResponseEntity.ok(responseDto);
     }
 
+    /**
+     * Retrieves a specific category by ID for the authenticated user.
+     * Ensures the category belongs to the requesting user.
+     * Endpoint: GET /user/category/{id}
+     *
+     * @param authentication Spring Security authentication object
+     * @param id ID of the category to retrieve
+     * @return ResponseEntity with CategoryDto and HTTP 200 OK
+     * @throws NotFoundException if category not found or doesn't belong to user
+     */
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDto> getCategory(
             Authentication authentication,
@@ -53,6 +89,18 @@ public class CategoryController {
         return ResponseEntity.ok(responseDto);
     }
 
+    /**
+     * Updates an existing category for the authenticated user.
+     * Can modify name, color, type, and parent relationship.
+     * Setting parentId to null removes the parent relationship.
+     * Endpoint: PUT /user/category/{id}
+     *
+     * @param authentication Spring Security authentication object
+     * @param id ID of the category to update
+     * @param categoryDto DTO containing updated category data
+     * @return ResponseEntity with updated CategoryDto and HTTP 200 OK
+     * @throws NotFoundException if category or parent category not found
+     */
     @PutMapping("/{id}")
     public ResponseEntity<CategoryDto> updateCategory(
             Authentication authentication,
@@ -77,6 +125,16 @@ public class CategoryController {
         return ResponseEntity.ok(responseDto);
     }
 
+    /**
+     * Deletes a category for the authenticated user.
+     * If the category has children, they will be automatically deleted (cascade).
+     * Endpoint: DELETE /user/category/{id}
+     *
+     * @param authentication Spring Security authentication object
+     * @param id ID of the category to delete
+     * @return ResponseEntity with HTTP 204 No Content
+     * @throws NotFoundException if category not found or doesn't belong to user
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(
             Authentication authentication,

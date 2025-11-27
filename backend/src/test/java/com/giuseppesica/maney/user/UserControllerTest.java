@@ -2,6 +2,7 @@ package com.giuseppesica.maney.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.giuseppesica.maney.account.service.LiquidityAccountService;
+import com.giuseppesica.maney.category.service.CategoryService;
 import com.giuseppesica.maney.config.SecurityConfig;
 import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
@@ -59,6 +60,9 @@ public class UserControllerTest {
 
     @MockitoBean
     private AuthenticationHelper authenticationHelper;
+
+    @MockitoBean
+    private CategoryService categoryService;
 
     private User user;
     private Portfolio portfolio;

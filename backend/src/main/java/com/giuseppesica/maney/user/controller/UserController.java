@@ -2,6 +2,8 @@ package com.giuseppesica.maney.user.controller;
 
 import com.giuseppesica.maney.account.dto.LiquidityAccountDto;
 import com.giuseppesica.maney.account.service.LiquidityAccountService;
+import com.giuseppesica.maney.category.model.CategoryDto;
+import com.giuseppesica.maney.category.service.CategoryService;
 import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
 import com.giuseppesica.maney.portfolio.dto.PortfolioDto;
@@ -46,6 +48,7 @@ public class UserController {
     private final AuthenticationHelper authHelper;
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private final CategoryService categoryService;
 
     /**
      * Constructor for dependency injection.
@@ -62,13 +65,14 @@ public class UserController {
             PortfolioService portfolioService,
             IlliquidAssetService illiquidAssetService,
             LiquidityAccountService liquidityAccountService,
-            AuthenticationHelper authHelper
-    ) {
+            AuthenticationHelper authHelper,
+            CategoryService categoryService) {
         this.userService = userService;
         this.portfolioService = portfolioService;
         this.illiquidAssetService = illiquidAssetService;
         this.liquidityAccountService = liquidityAccountService;
         this.authHelper = authHelper;
+        this.categoryService = categoryService;
     }
 
 
@@ -157,5 +161,15 @@ public class UserController {
         portfolioDto.setLiquidityAccounts(liquidityAccountDtos);
 
         return ResponseEntity.ok(portfolioDto);
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<CategoryDto>> getUserCategories(Authentication authentication) {
+        User user = userService.UserFromAuthentication(authentication);
+        List<CategoryDto> categories = categoryService.findByUserId(user.getId())
+                .stream()
+                .map(CategoryDto::new)
+                .toList();
+        return ResponseEntity.ok(categories);
     }
 }

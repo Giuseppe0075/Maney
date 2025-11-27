@@ -5,6 +5,7 @@ import com.giuseppesica.maney.category.model.CategoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -33,5 +34,9 @@ public class CategoryService {
     @Transactional
     public void deleteCategory(Category category) {
         categoryRepository.delete(category);
+    }
+
+    public List<Category> findByUserId(Long id) {
+        return categoryRepository.findByUserId(id);
     }
 }

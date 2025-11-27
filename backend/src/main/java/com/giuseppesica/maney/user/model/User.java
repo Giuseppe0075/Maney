@@ -1,5 +1,6 @@
 package com.giuseppesica.maney.user.model;
 
+import com.giuseppesica.maney.category.model.Category;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Entity representing a user in the system.
@@ -73,6 +75,9 @@ public class User {
      */
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Portfolio portfolio;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Category> categories;
 
     /**
      * Sets the portfolio for this user and maintains bidirectional relationship.

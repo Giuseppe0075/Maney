@@ -2,6 +2,7 @@ package com.giuseppesica.maney.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.giuseppesica.maney.account.service.LiquidityAccountService;
+import com.giuseppesica.maney.config.SecurityConfig;
 import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
@@ -32,7 +33,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.springframework.context.annotation.Import;
+
 @WebMvcTest(UserController.class)
+@Import(SecurityConfig.class)
 public class UserControllerTest {
 
     @Autowired

@@ -6,11 +6,9 @@ import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.model.IlliquidAsset;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
-import com.giuseppesica.maney.portfolio.service.PortfolioService;
 import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.model.User;
-import com.giuseppesica.maney.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,22 +46,15 @@ public class IlliquidAssetControllerTest {
     private IlliquidAssetService illiquidAssetService;
 
     @MockitoBean
-    private UserService userService;
-
-    @MockitoBean
-    private PortfolioService portfolioService;
-
-    @MockitoBean
     private AuthenticationHelper authenticationHelper;
 
-    private User testUser;
     private Portfolio testPortfolio;
     private IlliquidAsset testAsset;
 
     @BeforeEach
     public void setUp() {
         // Create test user
-        testUser = new User();
+        User testUser = new User();
         testUser.setId(1L);
         testUser.setEmail("test@example.com");
         testUser.setUsername("testuser");

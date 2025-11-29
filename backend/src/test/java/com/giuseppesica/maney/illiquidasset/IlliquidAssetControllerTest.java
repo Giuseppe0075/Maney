@@ -84,7 +84,7 @@ public class IlliquidAssetControllerTest {
         when(illiquidAssetService.getIlliquidAssetById(1L, 1L)).thenReturn(Optional.of(testAsset));
 
         // When & Then
-        mockMvc.perform(get("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(get("/user/portfolio/illiquid-assets/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -105,7 +105,7 @@ public class IlliquidAssetControllerTest {
         when(illiquidAssetService.getIlliquidAssetById(1L, 99L)).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(get("/user/illiquid-asset/{id}", 99L)
+        mockMvc.perform(get("/user/portfolio/illiquid-assets/{id}", 99L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
@@ -121,7 +121,7 @@ public class IlliquidAssetControllerTest {
                 .thenThrow(new NotFoundException("User not found"));
 
         // When & Then
-        mockMvc.perform(get("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(get("/user/portfolio/illiquid-assets/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
@@ -137,7 +137,7 @@ public class IlliquidAssetControllerTest {
                 .thenThrow(new NotFoundException("Portfolio not found"));
 
         // When & Then
-        mockMvc.perform(get("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(get("/user/portfolio/illiquid-assets/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
@@ -163,7 +163,7 @@ public class IlliquidAssetControllerTest {
                 .thenReturn(createdAsset);
 
         // When & Then
-        mockMvc.perform(post("/user/illiquid-asset")
+        mockMvc.perform(post("/user/portfolio/illiquid-assets")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newAssetDto)))
@@ -191,7 +191,7 @@ public class IlliquidAssetControllerTest {
                 .thenThrow(new NotFoundException("User not found"));
 
         // When & Then
-        mockMvc.perform(post("/user/illiquid-asset")
+        mockMvc.perform(post("/user/portfolio/illiquid-assets")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newAssetDto)))
@@ -214,7 +214,7 @@ public class IlliquidAssetControllerTest {
                 .thenThrow(new NotFoundException("Portfolio not found"));
 
         // When & Then
-        mockMvc.perform(post("/user/illiquid-asset")
+        mockMvc.perform(post("/user/portfolio/illiquid-assets")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newAssetDto)))
@@ -245,7 +245,7 @@ public class IlliquidAssetControllerTest {
                 .thenReturn(Optional.of(updatedAsset));
 
         // When & Then
-        mockMvc.perform(put("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(put("/user/portfolio/illiquid-assets/{id}", 1L)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -274,7 +274,7 @@ public class IlliquidAssetControllerTest {
                 .thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(put("/user/illiquid-asset/{id}", 99L)
+        mockMvc.perform(put("/user/portfolio/illiquid-assets/{id}", 99L)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -297,7 +297,7 @@ public class IlliquidAssetControllerTest {
                 .thenThrow(new NotFoundException("User not found"));
 
         // When & Then
-        mockMvc.perform(put("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(put("/user/portfolio/illiquid-assets/{id}", 1L)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -320,7 +320,7 @@ public class IlliquidAssetControllerTest {
                 .thenThrow(new NotFoundException("Portfolio not found"));
 
         // When & Then
-        mockMvc.perform(put("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(put("/user/portfolio/illiquid-assets/{id}", 1L)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -339,7 +339,7 @@ public class IlliquidAssetControllerTest {
         doNothing().when(illiquidAssetService).deleteIlliquidAsset(testAsset);
 
         // When & Then
-        mockMvc.perform(delete("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(delete("/user/portfolio/illiquid-assets/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
@@ -356,7 +356,7 @@ public class IlliquidAssetControllerTest {
         when(illiquidAssetService.getIlliquidAssetById(1L, 99L)).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(delete("/user/illiquid-asset/{id}", 99L)
+        mockMvc.perform(delete("/user/portfolio/illiquid-assets/{id}", 99L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
@@ -373,7 +373,7 @@ public class IlliquidAssetControllerTest {
                 .thenThrow(new NotFoundException("User not found"));
 
         // When & Then
-        mockMvc.perform(delete("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(delete("/user/portfolio/illiquid-assets/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
@@ -390,7 +390,7 @@ public class IlliquidAssetControllerTest {
                 .thenThrow(new NotFoundException("Portfolio not found"));
 
         // When & Then
-        mockMvc.perform(delete("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(delete("/user/portfolio/illiquid-assets/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
@@ -417,7 +417,7 @@ public class IlliquidAssetControllerTest {
                 .thenReturn(createdAsset);
 
         // When & Then
-        mockMvc.perform(post("/user/illiquid-asset")
+        mockMvc.perform(post("/user/portfolio/illiquid-assets")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newAssetDto)))
@@ -433,7 +433,7 @@ public class IlliquidAssetControllerTest {
     @Test
     public void testGetIlliquidAsset_Unauthorized_Returns401() throws Exception {
         // When & Then
-        mockMvc.perform(get("/user/illiquid-asset/{id}", 1L))
+        mockMvc.perform(get("/user/portfolio/illiquid-assets/{id}", 1L))
                 .andExpect(status().isUnauthorized());
 
         verify(authenticationHelper, never()).getAuthenticatedUserPortfolioId(any());
@@ -449,7 +449,7 @@ public class IlliquidAssetControllerTest {
         newAssetDto.setEstimatedValue(75000.0f);
 
         // When & Then
-        mockMvc.perform(post("/user/illiquid-asset")
+        mockMvc.perform(post("/user/portfolio/illiquid-assets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newAssetDto)))
                 .andExpect(status().isForbidden());
@@ -467,7 +467,7 @@ public class IlliquidAssetControllerTest {
         updateDto.setEstimatedValue(100000.0f);
 
         // When & Then
-        mockMvc.perform(put("/user/illiquid-asset/{id}", 1L)
+        mockMvc.perform(put("/user/portfolio/illiquid-assets/{id}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isForbidden());
@@ -479,7 +479,7 @@ public class IlliquidAssetControllerTest {
     @Test
     public void testDeleteIlliquidAsset_Forbidden_Returns403() throws Exception {
         // When & Then
-        mockMvc.perform(delete("/user/illiquid-asset/{id}", 1L))
+        mockMvc.perform(delete("/user/portfolio/illiquid-assets/{id}", 1L))
                 .andExpect(status().isForbidden());
 
         verify(authenticationHelper, never()).getAuthenticatedUserPortfolioId(any());
@@ -487,4 +487,3 @@ public class IlliquidAssetControllerTest {
         verify(illiquidAssetService, never()).deleteIlliquidAsset(any());
     }
 }
-

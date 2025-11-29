@@ -7,18 +7,18 @@ import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.security.NotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for managing liquidity accounts.
- * Handles HTTP requests related to creating and retrieving liquidity accounts.
+ * Handles HTTP requests related to creating, reading, updating, and deleting individual liquidity accounts.
  * All endpoints require user authentication and validate portfolio ownership.
+ * Base path follows hierarchical structure: /user/portfolio/liquidity-accounts
  */
 @RestController
-@RequestMapping("/user/liquidity-account")
+@RequestMapping("/user/portfolio/liquidity-accounts")
 public class LiquidityAccountController {
     private final LiquidityAccountService liquidityAccountService;
     private final AuthenticationHelper authHelper;

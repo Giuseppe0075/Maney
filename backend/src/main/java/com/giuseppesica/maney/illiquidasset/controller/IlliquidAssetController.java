@@ -9,18 +9,18 @@ import com.giuseppesica.maney.security.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
 /**
  * REST controller for managing illiquid assets.
- * Handles HTTP requests for creating, reading, updating, and deleting illiquid assets.
+ * Handles HTTP requests for creating, reading, updating, and deleting individual illiquid assets.
  * All endpoints require user authentication and verify asset ownership.
+ * Base path follows hierarchical structure: /user/portfolio/illiquid-assets
  */
-@Controller
-@RequestMapping("/user/illiquid-asset")
+@RestController
+@RequestMapping("/user/portfolio/illiquid-assets")
 public class IlliquidAssetController {
 
     private final IlliquidAssetService illiquidAssetService;

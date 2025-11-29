@@ -9,21 +9,20 @@ import com.giuseppesica.maney.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * REST Controller for Category management.
  * Provides endpoints for CRUD operations on user categories.
  * All endpoints require authentication and operate only on the authenticated user's categories.
- * Base path: /user/category
+ * Base path: /user/categories
  *
  * @author Giuseppe Sica
  * @version 1.0
  * @since 2025-11-27
  */
-@Controller
-@RequestMapping("/user/category")
+@RestController
+@RequestMapping("/user/categories")
 public class CategoryController {
     private final UserService userService;
     private final CategoryService categoryService;

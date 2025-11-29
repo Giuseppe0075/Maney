@@ -107,7 +107,7 @@ class CategoryControllerTest {
         when(categoryService.saveCategory(any(Category.class))).thenReturn(savedCategory);
 
         // When & Then
-        mockMvc.perform(post("/user/category")
+        mockMvc.perform(post("/user/categories")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testCategoryDto)))
@@ -138,7 +138,7 @@ class CategoryControllerTest {
         when(categoryService.saveCategory(any(Category.class))).thenReturn(savedCategory);
 
         // When & Then
-        mockMvc.perform(post("/user/category")
+        mockMvc.perform(post("/user/categories")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testCategoryDto)))
@@ -161,7 +161,7 @@ class CategoryControllerTest {
         when(categoryService.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(post("/user/category")
+        mockMvc.perform(post("/user/categories")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testCategoryDto)))
@@ -181,7 +181,7 @@ class CategoryControllerTest {
         invalidDto.setType(CategoryType.INCOME);
 
         // When & Then
-        mockMvc.perform(post("/user/category")
+        mockMvc.perform(post("/user/categories")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidDto)))
@@ -198,7 +198,7 @@ class CategoryControllerTest {
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.of(testCategory));
 
         // When & Then
-        mockMvc.perform(get("/user/category/{id}", 2L)
+        mockMvc.perform(get("/user/categories/{id}", 2L)
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -219,7 +219,7 @@ class CategoryControllerTest {
         when(categoryService.findByUserAndId(1L, 999L)).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(get("/user/category/{id}", 999L)
+        mockMvc.perform(get("/user/categories/{id}", 999L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
@@ -248,7 +248,7 @@ class CategoryControllerTest {
         when(categoryService.saveCategory(any(Category.class))).thenReturn(updatedCategory);
 
         // When & Then
-        mockMvc.perform(put("/user/category/{id}", 2L)
+        mockMvc.perform(put("/user/categories/{id}", 2L)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -278,7 +278,7 @@ class CategoryControllerTest {
         when(categoryService.saveCategory(any(Category.class))).thenReturn(testCategory);
 
         // When & Then
-        mockMvc.perform(put("/user/category/{id}", 2L)
+        mockMvc.perform(put("/user/categories/{id}", 2L)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -303,7 +303,7 @@ class CategoryControllerTest {
         when(categoryService.saveCategory(any(Category.class))).thenReturn(testCategory);
 
         // When & Then
-        mockMvc.perform(put("/user/category/{id}", 2L)
+        mockMvc.perform(put("/user/categories/{id}", 2L)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -326,7 +326,7 @@ class CategoryControllerTest {
         when(categoryService.findByUserAndId(1L, 999L)).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(put("/user/category/{id}", 999L)
+        mockMvc.perform(put("/user/categories/{id}", 999L)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -351,7 +351,7 @@ class CategoryControllerTest {
         when(categoryService.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(put("/user/category/{id}", 2L)
+        mockMvc.perform(put("/user/categories/{id}", 2L)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
@@ -370,7 +370,7 @@ class CategoryControllerTest {
         doNothing().when(categoryService).deleteCategory(testCategory);
 
         // When & Then
-        mockMvc.perform(delete("/user/category/{id}", 2L)
+        mockMvc.perform(delete("/user/categories/{id}", 2L)
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
@@ -386,7 +386,7 @@ class CategoryControllerTest {
         when(categoryService.findByUserAndId(1L, 999L)).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(delete("/user/category/{id}", 999L)
+        mockMvc.perform(delete("/user/categories/{id}", 999L)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
 
@@ -412,7 +412,7 @@ class CategoryControllerTest {
         doNothing().when(categoryService).deleteCategory(testParentCategory);
 
         // When & Then
-        mockMvc.perform(delete("/user/category/{id}", 1L)
+        mockMvc.perform(delete("/user/categories/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
@@ -423,7 +423,7 @@ class CategoryControllerTest {
     @Test
     void testCreateCategory_Unauthenticated_Returns401() throws Exception {
         // When & Then
-        mockMvc.perform(post("/user/category")
+        mockMvc.perform(post("/user/categories")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testCategoryDto)))
@@ -435,7 +435,7 @@ class CategoryControllerTest {
     @Test
     void testGetCategory_Unauthenticated_Returns401() throws Exception {
         // When & Then
-        mockMvc.perform(get("/user/category/{id}", 1L)
+        mockMvc.perform(get("/user/categories/{id}", 1L)
                         .with(csrf()))
                 .andExpect(status().isUnauthorized());
 

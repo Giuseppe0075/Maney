@@ -6,6 +6,7 @@ import com.giuseppesica.maney.account.operation.model.CashMovementDto;
 import com.giuseppesica.maney.account.operation.service.CashMovementService;
 import com.giuseppesica.maney.account.service.LiquidityAccountService;
 import com.giuseppesica.maney.category.model.Category;
+import com.giuseppesica.maney.category.service.CategoryService;
 import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.service.UserService;
@@ -29,12 +30,14 @@ public class CashMovementControl {
     private final UserService userService;
     private final CashMovementService cashMovementService;
     private final LiquidityAccountService liquidityAccountService;
+    private final CategoryService categoryService;
 
     @Autowired
-    public CashMovementControl(UserService userService, CashMovementService cashMovementService, LiquidityAccountService liquidityAccountService) {
+    public CashMovementControl(UserService userService, CashMovementService cashMovementService, LiquidityAccountService liquidityAccountService, CategoryService categoryService) {
         this.userService = userService;
         this.cashMovementService = cashMovementService;
         this.liquidityAccountService = liquidityAccountService;
+        this.categoryService = categoryService;
     }
 
     @GetMapping
@@ -57,8 +60,7 @@ public class CashMovementControl {
             @Valid @RequestBody CashMovementDto cashMovementDto
     ){
         User user = userService.UserFromAuthentication(authentication);
-
-        // Risolviamo l'account dell'utente partendo dal nome passato nel DTO
+        
         LiquidityAccount liquidityAccount = liquidityAccountService
                 .getLiquidityAccountByPortfolioIdAndName(
                         user.getPortfolio().getId(),
@@ -66,10 +68,11 @@ public class CashMovementControl {
                 )
                 .orElseThrow(() -> new NotFoundException("Liquidity Account Not Found"));
 
-        // TODO: quando avrai un CategoryService potrai risolvere la categoria da categoryId
-        Category category = null;
+        Category category = categoryService.findByUserAndId(
+                user.getId(),
+                cashMovementDto.getCategoryId()
+        ).orElseThrow(() -> new NotFoundException("Category Not Found"));
 
-        // Costruiamo esplicitamente l'entità CashMovement
         CashMovement cashMovement = new CashMovement();
         cashMovement.setDate(cashMovementDto.getDate());
         cashMovement.setNote(cashMovementDto.getNote());

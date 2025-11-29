@@ -64,7 +64,7 @@ export function IlliquidAssetPage() {
 
         const fetchAsset = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/user/illiquid-asset/${id}`, {
+                const response = await fetch(`http://localhost:8080/user/portfolio/illiquid-assets/${id}`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
@@ -121,8 +121,8 @@ export function IlliquidAssetPage() {
         try {
             // Determine URL and HTTP method based on whether we're creating or updating
             const url = isNewAsset
-                ? 'http://localhost:8080/user/illiquid-asset'
-                : `http://localhost:8080/user/illiquid-asset/${id}`;
+                ? 'http://localhost:8080/user/portfolio/illiquid-assets'
+                : `http://localhost:8080/user/portfolio/illiquid-assets/${id}`;
 
             const method = isNewAsset ? 'POST' : 'PUT';
 
@@ -197,7 +197,7 @@ export function IlliquidAssetPage() {
             }
 
             // Send DELETE request to backend
-            const response = await fetch(`http://localhost:8080/user/illiquid-asset/${id}`, {
+            const response = await fetch(`http://localhost:8080/user/portfolio/illiquid-assets/${id}`, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers,
@@ -382,4 +382,3 @@ export function IlliquidAssetPage() {
         </div>
     );
 }
-

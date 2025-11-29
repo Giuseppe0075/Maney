@@ -10,6 +10,15 @@ import lombok.Setter;
 import java.time.Instant;
 
 @Entity
+@Table(
+        name="account",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_account_portfolio_name",
+                        columnNames = {"portfolio_id", "name"}
+                )
+        }
+)
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "account_type", discriminatorType = DiscriminatorType.STRING)
 @Getter

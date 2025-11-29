@@ -1,5 +1,9 @@
 package com.giuseppesica.maney.account.model;
 
-public interface LiquidityAccountRepository extends AccountRepository{
+import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
+public interface LiquidityAccountRepository extends JpaRepository<LiquidityAccount, Long> {
+    List<LiquidityAccount> findByPortfolioId(Long portfolioId);
 }

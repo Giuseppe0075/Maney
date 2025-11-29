@@ -5,8 +5,10 @@ import com.giuseppesica.maney.account.model.LiquidityAccount;
 import com.giuseppesica.maney.account.model.LiquidityAccountRepository;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.portfolio.model.PortfolioRepository;
+import com.giuseppesica.maney.utils.CashMovementType;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,5 +87,25 @@ public class LiquidityAccountService {
             throw new IllegalArgumentException("Liquidity Account Not Found");
         }
         liquidityAccountRepository.deleteById(id);
+    }
+
+    public Optional<LiquidityAccount> getLiquidityAccountByPortfolioIdAndName(Long portfolioId, String name) {
+        return liquidityAccountRepository.findByPortfolioId(portfolioId)
+                .stream()
+                .filter(account -> account.getName().equals(name))
+                .findFirst();
+    }
+
+    public void updateLiquidityAccount(LiquidityAccount liquidityAccount, BigDecimal amount, CashMovementType type) {
+        BigDecimal updatedBalance;
+        if (type == CashMovementType.INCOME) {
+            updatedBalance = liquidityAccount.getBalance().add(amount);
+        } else if (type == CashMovementType.OUTCOME) {
+            updatedBalance = liquidityAccount.getBalance().subtract(amount);
+        } else {
+            throw new IllegalArgumentException("Invalid Cash Movement Type");
+        }
+        liquidityAccount.setBalance(updatedBalance);
+        liquidityAccountRepository.save(liquidityAccount);
     }
 }

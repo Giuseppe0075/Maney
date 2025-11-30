@@ -10,21 +10,18 @@ import com.giuseppesica.maney.category.service.CategoryService;
 import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.service.UserService;
+import com.giuseppesica.maney.utils.CashMovementType;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller
-@RequestMapping("/user/cash-movements")
+@RestController
+@RequestMapping("/user/portfolio/liquidity-accounts/cash-movements")
 public class CashMovementControl {
 
     private final UserService userService;
@@ -51,6 +48,17 @@ public class CashMovementControl {
                         .map(CashMovementDto::new)
                         .toList();
         return ResponseEntity.ok(cashMovementDtos);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CashMovementDto> getCashMovementById(
+            Authentication authentication,
+            @PathVariable Long id
+            ){
+        User user = userService.UserFromAuthentication(authentication);
+        CashMovement cashMovement = cashMovementService.getCashMovementByIdAndUserId(id, user)
+                .orElseThrow(() -> new NotFoundException("Cash Movement Not Found"));
+        return ResponseEntity.ok(new CashMovementDto(cashMovement));
     }
 
     @PostMapping
@@ -90,6 +98,57 @@ public class CashMovementControl {
         );
 
         return ResponseEntity.ok(new CashMovementDto(cashMovement));
+    }
+
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity<CashMovementDto> updateCashMovement(
+            Authentication authentication,
+            @PathVariable Long id,
+            @Valid @RequestBody CashMovementDto cashMovementDto
+    ){
+        User user = userService.UserFromAuthentication(authentication);
+        CashMovement cashMovementToUpdate = cashMovementService.getCashMovementByIdAndUserId(id, user)
+                .orElseThrow(() -> new NotFoundException("Cash Movement Not Found"));
+        // Revert previous cash movement effect
+        liquidityAccountService.updateLiquidityAccount(
+                cashMovementToUpdate.getLiquidityAccount(),
+                cashMovementToUpdate.getAmount(),
+                cashMovementToUpdate.getType() == CashMovementType.INCOME ? CashMovementType.OUTCOME : CashMovementType.INCOME
+        );
+        // Apply new cash movement effect
+        liquidityAccountService.updateLiquidityAccount(
+                cashMovementToUpdate.getLiquidityAccount(),
+                cashMovementDto.getAmount(),
+                cashMovementDto.getType()
+        );
+
+        // Save cash movement changes
+        cashMovementToUpdate.setDate(cashMovementDto.getDate());
+        cashMovementToUpdate.setNote(cashMovementDto.getNote());
+        cashMovementToUpdate.setAmount(cashMovementDto.getAmount());
+        cashMovementToUpdate.setType(cashMovementDto.getType());
+        CashMovement updatedCm = cashMovementService.saveCashMovement(cashMovementToUpdate);
+        return ResponseEntity.ok(new CashMovementDto(updatedCm));
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<Void> deleteCashMovement(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        User user = userService.UserFromAuthentication(authentication);
+        CashMovement cashMovementToDelete = cashMovementService.getCashMovementByIdAndUserId(id, user)
+                .orElseThrow(() -> new NotFoundException("Cash Movement Not Found"));
+        // Revert cash movement effect
+        liquidityAccountService.updateLiquidityAccount(
+                cashMovementToDelete.getLiquidityAccount(),
+                cashMovementToDelete.getAmount(),
+                cashMovementToDelete.getType() == CashMovementType.INCOME ? CashMovementType.OUTCOME : CashMovementType.INCOME
+        );
+        cashMovementService.deleteCashMovement(cashMovementToDelete);
+        return ResponseEntity.noContent().build();
     }
 
 }

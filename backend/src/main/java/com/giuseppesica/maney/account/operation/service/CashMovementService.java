@@ -11,27 +11,32 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CashMovementService {
 
-    private final LiquidityAccountRepository liquidityAccountRepository;
     private final CashMovementRepository cashMovementRepository;
 
     @Autowired
-    public CashMovementService(LiquidityAccountRepository liquidityAccountRepository, CashMovementRepository cashMovementRepository) {
-        this.liquidityAccountRepository = liquidityAccountRepository;
+    public CashMovementService(CashMovementRepository cashMovementRepository) {
         this.cashMovementRepository = cashMovementRepository;
     }
 
     public List<CashMovement> getCashMovementsByUserId(User user) {
-        List<LiquidityAccount> userLiquidityAccounts =
-                liquidityAccountRepository.findByPortfolioId(user.getPortfolio().getId());
-        return cashMovementRepository.findByLiquidityAccountIn(userLiquidityAccounts);
+        return cashMovementRepository.findByPortfolioId(user.getPortfolio().getId());
     }
 
     public CashMovement saveCashMovement(CashMovement cashMovement) {
         return cashMovementRepository.save(cashMovement);
     }
 
+    public Optional<CashMovement> getCashMovementByIdAndUserId(Long id, User user) {
+        return cashMovementRepository.findByIdAndPortfolioId(id, user.getPortfolio().getId());
+    }
+
+    public void deleteCashMovement(CashMovement cashMovement) {
+        cashMovementRepository.delete(cashMovement);
+    }
 }
+

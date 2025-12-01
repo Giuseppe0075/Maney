@@ -28,7 +28,7 @@ public class LiquidityAccountService {
     public LiquidityAccount saveLiquidityAccount(LiquidityAccount liquidityAccount) {
         Portfolio portfolio = Optional.ofNullable(liquidityAccount.getPortfolio())
                 .orElseThrow(() -> new NotFoundException("Portfolio not found"));
-        Long portfolioId = Optional.ofNullable(portfolio.getId())
+        Long portfolioId = Optional.of(portfolio.getId())
                 .orElseThrow(() -> new NotFoundException("Portfolio not found"));
         Portfolio persistedPortfolio = portfolioRepository.findById(portfolioId)
                 .orElseThrow(() -> new NotFoundException("Portfolio not found"));
@@ -37,7 +37,7 @@ public class LiquidityAccountService {
     }
 
     public List<LiquidityAccountDto> getLiquidityAccounts(Long portfolioId) {
-        List<LiquidityAccount> accounts = liquidityAccountRepository.findByPortfolioId(portfolioId).stream().map(account -> (LiquidityAccount) account).toList();
+        List<LiquidityAccount> accounts = liquidityAccountRepository.findByPortfolioId(portfolioId);
         return accounts.stream().map(LiquidityAccountDto::new).toList();
     }
 
@@ -48,8 +48,7 @@ public class LiquidityAccountService {
      * @return Optional containing the liquidity account if found
      */
     public Optional<LiquidityAccount> getLiquidityAccountById(Long id) {
-        return liquidityAccountRepository.findById(id)
-                .map(account -> (LiquidityAccount) account);
+        return liquidityAccountRepository.findById(id);
     }
 
     /**
@@ -62,7 +61,6 @@ public class LiquidityAccountService {
      */
     public LiquidityAccount updateLiquidityAccount(Long id, LiquidityAccountDto dto) {
         LiquidityAccount account = liquidityAccountRepository.findById(id)
-                .map(acc -> (LiquidityAccount) acc)
                 .orElseThrow(() -> new NotFoundException("Liquidity account not found"));
 
         // Update fields from Account base class

@@ -25,4 +25,12 @@ public class TransferService {
     public Optional<Transfer> getTransferByIdAndUserId(Long id, User user) {
         return transferRepository.findByIdAndPortfolioId(id, user.getPortfolio().getId());
     }
+
+    public Transfer saveTransfer(Transfer transfer) {
+        return transferRepository.save(transfer);
+    }
+
+    public void deleteTransferById(Long id) {
+        transferRepository.deleteById(id);
+    }
 }

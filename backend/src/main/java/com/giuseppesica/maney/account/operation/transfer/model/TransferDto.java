@@ -8,7 +8,6 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Date;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,10 +23,10 @@ public class TransferDto {
     private String note;
 
     @NotNull
-    private Long fromAccountId;
+    private String fromAccountName;
 
     @NotNull
-    private Long toAccountId;
+    private String toAccountName;
 
     @NotNull
     private BigDecimal amount;
@@ -36,8 +35,8 @@ public class TransferDto {
     public TransferDto(Transfer transfer) {
         this.date = transfer.getDate();
         this.note = transfer.getNote();
-        this.fromAccountId = transfer.getFromAccount().getId();
-        this.toAccountId = transfer.getToAccount().getId();
+        this.fromAccountName = transfer.getFromAccount().getName();
+        this.toAccountName = transfer.getToAccount().getName();
         this.amount = transfer.getAmount();
     }
 }

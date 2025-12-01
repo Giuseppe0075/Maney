@@ -1,7 +1,7 @@
 package com.giuseppesica.maney.portfolio.dto;
 
 
-import com.giuseppesica.maney.account.dto.LiquidityAccountDto;
+import com.giuseppesica.maney.account.liquidityaccount.dto.LiquidityAccountDto;
 import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import lombok.*;

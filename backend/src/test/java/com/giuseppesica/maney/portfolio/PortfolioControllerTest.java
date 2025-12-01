@@ -1,7 +1,7 @@
 package com.giuseppesica.maney.portfolio;
 
-import com.giuseppesica.maney.account.dto.LiquidityAccountDto;
-import com.giuseppesica.maney.account.service.LiquidityAccountService;
+import com.giuseppesica.maney.account.liquidityaccount.dto.LiquidityAccountDto;
+import com.giuseppesica.maney.account.liquidityaccount.service.LiquidityAccountService;
 import com.giuseppesica.maney.config.SecurityConfig;
 import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;

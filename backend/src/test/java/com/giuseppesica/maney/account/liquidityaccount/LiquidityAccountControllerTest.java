@@ -1,10 +1,10 @@
-package com.giuseppesica.maney.account;
+package com.giuseppesica.maney.account.liquidityaccount;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.giuseppesica.maney.account.controller.LiquidityAccountController;
-import com.giuseppesica.maney.account.dto.LiquidityAccountDto;
-import com.giuseppesica.maney.account.model.LiquidityAccount;
-import com.giuseppesica.maney.account.service.LiquidityAccountService;
+import com.giuseppesica.maney.account.liquidityaccount.controller.LiquidityAccountController;
+import com.giuseppesica.maney.account.liquidityaccount.dto.LiquidityAccountDto;
+import com.giuseppesica.maney.account.liquidityaccount.model.LiquidityAccount;
+import com.giuseppesica.maney.account.liquidityaccount.service.LiquidityAccountService;
 import com.giuseppesica.maney.config.SecurityConfig;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.security.AuthenticationHelper;
@@ -238,13 +238,82 @@ public class LiquidityAccountControllerTest {
 
     @Test
     public void testGetLiquidityAccount_Unauthenticated_ReturnsUnauthorized() throws Exception {
-        // When & Then - No authentication, GET request returns 401 with continue parameter
+        // When & Then - No authentication, GET request returns 401 - security filter blocks before controller
         mockMvc.perform(get("/user/portfolio/liquidity-accounts/1"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
 
         verify(liquidityAccountService, never()).getLiquidityAccountById(any());
         verify(authenticationHelper, never()).validateResourceAccess(any(), any(), any());
+    }
+
+    // ==================== GET ALL LIQUIDITY ACCOUNTS TESTS ====================
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetLiquidityAccounts_Success_ReturnsAllAccounts() throws Exception {
+        // Given
+        LiquidityAccount account2 = new LiquidityAccount();
+        account2.setName("Savings Account");
+        account2.setInstitution("UniCredit");
+        account2.setBalance(new BigDecimal("5000.00"));
+        account2.setCurrency(Currency.USD);
+        account2.setPortfolio(portfolio);
+
+        LiquidityAccountDto dto1 = new LiquidityAccountDto(liquidityAccount);
+        LiquidityAccountDto dto2 = new LiquidityAccountDto(account2);
+
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any())).thenReturn(1L);
+        when(liquidityAccountService.getLiquidityAccounts(1L))
+                .thenReturn(java.util.List.of(dto1, dto2));
+
+        // When & Then
+        mockMvc.perform(get("/user/portfolio/liquidity-accounts")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].name").value("Conto Corrente"))
+                .andExpect(jsonPath("$[0].institution").value("Intesa Sanpaolo"))
+                .andExpect(jsonPath("$[0].balance").value(1000.00))
+                .andExpect(jsonPath("$[0].currency").value("EUR"))
+                .andExpect(jsonPath("$[1].name").value("Savings Account"))
+                .andExpect(jsonPath("$[1].institution").value("UniCredit"))
+                .andExpect(jsonPath("$[1].balance").value(5000.00))
+                .andExpect(jsonPath("$[1].currency").value("USD"));
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any());
+        verify(liquidityAccountService, times(1)).getLiquidityAccounts(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetLiquidityAccounts_EmptyList_ReturnsEmptyArray() throws Exception {
+        // Given
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any())).thenReturn(1L);
+        when(liquidityAccountService.getLiquidityAccounts(1L))
+                .thenReturn(java.util.List.of());
+
+        // When & Then
+        mockMvc.perform(get("/user/portfolio/liquidity-accounts")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any());
+        verify(liquidityAccountService, times(1)).getLiquidityAccounts(1L);
+    }
+
+    @Test
+    public void testGetLiquidityAccounts_Unauthenticated_ReturnsUnauthorized() throws Exception {
+        // When & Then
+        mockMvc.perform(get("/user/portfolio/liquidity-accounts"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
+
+        verify(authenticationHelper, never()).getAuthenticatedUserPortfolioId(any());
+        verify(liquidityAccountService, never()).getLiquidityAccounts(any());
     }
 
     // ==================== UPDATE LIQUIDITY ACCOUNT TESTS ====================

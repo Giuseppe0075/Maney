@@ -94,6 +94,8 @@ class CategoryControllerTest {
         testCategoryDto.setType(CategoryType.INCOME);
     }
 
+    // ==================== CREATE CATEGORY TESTS ====================
+
     @Test
     @WithMockUser(username = "test@example.com")
     void testCreateCategory_Success_ReturnsCreated() throws Exception {
@@ -190,6 +192,8 @@ class CategoryControllerTest {
         verify(categoryService, never()).saveCategory(any(Category.class));
     }
 
+    // ==================== GET SINGLE CATEGORY TESTS ====================
+
     @Test
     @WithMockUser(username = "test@example.com")
     void testGetCategory_Success_ReturnsCategory() throws Exception {
@@ -225,6 +229,125 @@ class CategoryControllerTest {
 
         verify(categoryService, times(1)).findByUserAndId(1L, 999L);
     }
+
+    // ==================== GET ALL USER CATEGORIES TESTS ====================
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void testGetUserCategories_Success_ReturnsAllCategories() throws Exception {
+        // Given
+        Category category1 = new Category();
+        category1.setId(1L);
+        category1.setName("Category 1");
+        category1.setColor("#FF5733");
+        category1.setType(CategoryType.INCOME);
+        category1.setUser(testUser);
+
+        Category category2 = new Category();
+        category2.setId(2L);
+        category2.setName("Category 2");
+        category2.setColor("#33C3FF");
+        category2.setType(CategoryType.OUTCOME);
+        category2.setUser(testUser);
+
+        List<Category> categories = List.of(category1, category2);
+
+        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(categoryService.findByUserId(1L)).thenReturn(categories);
+
+        // When & Then
+        mockMvc.perform(get("/user/categories")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].name").value("Category 1"))
+                .andExpect(jsonPath("$[0].color").value("#FF5733"))
+                .andExpect(jsonPath("$[0].type").value("INCOME"))
+                .andExpect(jsonPath("$[1].name").value("Category 2"))
+                .andExpect(jsonPath("$[1].color").value("#33C3FF"))
+                .andExpect(jsonPath("$[1].type").value("OUTCOME"));
+
+        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
+        verify(categoryService, times(1)).findByUserId(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void testGetUserCategories_EmptyList_ReturnsEmptyArray() throws Exception {
+        // Given
+        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(categoryService.findByUserId(1L)).thenReturn(new ArrayList<>());
+
+        // When & Then
+        mockMvc.perform(get("/user/categories")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
+        verify(categoryService, times(1)).findByUserId(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void testGetUserCategories_WithHierarchy_ReturnsNestedCategories() throws Exception {
+        // Given
+        Category parentCategory = new Category();
+        parentCategory.setId(1L);
+        parentCategory.setName("Parent");
+        parentCategory.setColor("#FF5733");
+        parentCategory.setType(CategoryType.OUTCOME);
+        parentCategory.setUser(testUser);
+
+        Category childCategory = new Category();
+        childCategory.setId(2L);
+        childCategory.setName("Child");
+        childCategory.setColor("#33C3FF");
+        childCategory.setType(CategoryType.OUTCOME);
+        childCategory.setUser(testUser);
+        childCategory.setParent(parentCategory);
+
+        List<Category> children = new ArrayList<>();
+        children.add(childCategory);
+        parentCategory.setChildren(children);
+
+        List<Category> categories = List.of(parentCategory, childCategory);
+
+        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(categoryService.findByUserId(1L)).thenReturn(categories);
+
+        // When & Then
+        mockMvc.perform(get("/user/categories")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].name").value("Parent"))
+                .andExpect(jsonPath("$[0].children").isArray())
+                .andExpect(jsonPath("$[0].children.length()").value(1))
+                .andExpect(jsonPath("$[0].children[0].name").value("Child"))
+                .andExpect(jsonPath("$[1].name").value("Child"))
+                .andExpect(jsonPath("$[1].parentId").value(1));
+
+        verify(categoryService, times(1)).findByUserId(1L);
+    }
+
+    @Test
+    void testGetUserCategories_Unauthenticated_Returns401() throws Exception {
+        // When & Then
+        mockMvc.perform(get("/user/categories")
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        verify(categoryService, never()).findByUserId(any());
+    }
+
+    // ==================== UPDATE CATEGORY TESTS ====================
 
     @Test
     @WithMockUser(username = "test@example.com")
@@ -361,6 +484,8 @@ class CategoryControllerTest {
         verify(categoryService, never()).saveCategory(any(Category.class));
     }
 
+    // ==================== DELETE CATEGORY TESTS ====================
+
     @Test
     @WithMockUser(username = "test@example.com")
     void testDeleteCategory_Success_ReturnsNoContent() throws Exception {
@@ -419,6 +544,8 @@ class CategoryControllerTest {
         verify(categoryService, times(1)).deleteCategory(testParentCategory);
         // Note: Cascade deletion is handled by Hibernate
     }
+
+    // ==================== AUTHORIZATION TESTS ====================
 
     @Test
     void testCreateCategory_Unauthenticated_Returns401() throws Exception {

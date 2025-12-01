@@ -64,6 +64,8 @@ class CategoryServiceTest {
         testCategory.setParent(testParentCategory);
     }
 
+    // ==================== FIND BY ID TESTS ====================
+
     @Test
     void testFindById_CategoryExists_ReturnsCategory() {
         // Given
@@ -92,6 +94,8 @@ class CategoryServiceTest {
         verify(categoryRepository, times(1)).findById(999L);
     }
 
+    // ==================== FIND BY USER AND ID TESTS ====================
+
     @Test
     void testFindByUserAndId_CategoryExists_ReturnsCategory() {
         // Given
@@ -119,6 +123,8 @@ class CategoryServiceTest {
         assertThat(result).isEmpty();
         verify(categoryRepository, times(1)).findByUserIdAndId(1L, 999L);
     }
+
+    // ==================== SAVE CATEGORY TESTS ====================
 
     @Test
     void testSaveCategory_Success_ReturnsSavedCategory() {
@@ -174,6 +180,8 @@ class CategoryServiceTest {
         verify(categoryRepository, times(1)).save(any(Category.class));
     }
 
+    // ==================== DELETE CATEGORY TESTS ====================
+
     @Test
     void testDeleteCategory_Success_DeletesCategory() {
         // Given
@@ -213,6 +221,8 @@ class CategoryServiceTest {
         verify(categoryRepository, times(1)).delete(testParentCategory);
         // Note: Cascade deletion is handled by Hibernate, not explicitly in the service
     }
+
+    // ==================== FIND BY USER ID TESTS ====================
 
     @Test
     void testFindByUserId_ReturnsAllUserCategories() {

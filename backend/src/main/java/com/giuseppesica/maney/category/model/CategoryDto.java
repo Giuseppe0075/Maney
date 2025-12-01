@@ -27,6 +27,13 @@ import java.util.List;
 public class CategoryDto {
 
     /**
+     * Unique identifier of the category.
+     * Populated when converting from entity to DTO.
+     * Null for new categories being created.
+     */
+    private Long id;
+
+    /**
      * Name of the category.
      * Must not be null or blank.
      * Examples: "Food", "Transport", "Salary"
@@ -71,6 +78,7 @@ public class CategoryDto {
      * @param category Category entity to convert
      */
     public CategoryDto(Category category) {
+        this.id = category.getId();
         this.name = category.getName();
         this.color = category.getColor();
         this.type = category.getType();

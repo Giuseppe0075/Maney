@@ -14,6 +14,8 @@ import java.time.Instant;
 @NoArgsConstructor
 public class CashMovementDto {
 
+    private Long id;
+
     // Dati del movimento
     @NotNull
     private Instant date;
@@ -38,6 +40,7 @@ public class CashMovementDto {
     private Long liquidityAccountId;
 
     public CashMovementDto(CashMovement cashMovement) {
+        this.id = cashMovement.getId();
         this.date = cashMovement.getDate();
         this.note = cashMovement.getNote();
         this.categoryId = cashMovement.getCategory() != null ? cashMovement.getCategory().getId() : null;

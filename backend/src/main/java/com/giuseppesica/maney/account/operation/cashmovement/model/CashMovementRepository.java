@@ -1,6 +1,5 @@
-package com.giuseppesica.maney.account.operation.model;
+package com.giuseppesica.maney.account.operation.cashmovement.model;
 
-import com.giuseppesica.maney.account.model.LiquidityAccount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

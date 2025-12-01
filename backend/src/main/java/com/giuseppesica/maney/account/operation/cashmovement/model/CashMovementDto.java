@@ -1,4 +1,4 @@
-package com.giuseppesica.maney.account.operation.model;
+package com.giuseppesica.maney.account.operation.cashmovement.model;
 
 import com.giuseppesica.maney.utils.CashMovementType;
 import jakarta.validation.constraints.NotNull;

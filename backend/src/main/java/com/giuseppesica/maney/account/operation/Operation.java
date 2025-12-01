@@ -1,4 +1,4 @@
-package com.giuseppesica.maney.account.operation.model;
+package com.giuseppesica.maney.account.operation;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

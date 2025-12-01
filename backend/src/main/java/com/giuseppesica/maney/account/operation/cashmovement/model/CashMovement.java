@@ -1,6 +1,7 @@
-package com.giuseppesica.maney.account.operation.model;
+package com.giuseppesica.maney.account.operation.cashmovement.model;
 
 import com.giuseppesica.maney.account.model.LiquidityAccount;
+import com.giuseppesica.maney.account.operation.Operation;
 import com.giuseppesica.maney.category.model.Category;
 import com.giuseppesica.maney.utils.CashMovementType;
 import jakarta.persistence.*;
@@ -18,7 +19,7 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CashMovement extends Operation{
+public class CashMovement extends Operation {
 
     @ManyToOne
     @JoinColumn(name = "category_id", foreignKey = @ForeignKey(name = "fk_cashmovement_category"))

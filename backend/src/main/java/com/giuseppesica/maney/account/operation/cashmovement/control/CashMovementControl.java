@@ -1,9 +1,9 @@
-package com.giuseppesica.maney.account.operation.control;
+package com.giuseppesica.maney.account.operation.cashmovement.control;
 
 import com.giuseppesica.maney.account.model.LiquidityAccount;
-import com.giuseppesica.maney.account.operation.model.CashMovement;
-import com.giuseppesica.maney.account.operation.model.CashMovementDto;
-import com.giuseppesica.maney.account.operation.service.CashMovementService;
+import com.giuseppesica.maney.account.operation.cashmovement.model.CashMovement;
+import com.giuseppesica.maney.account.operation.cashmovement.model.CashMovementDto;
+import com.giuseppesica.maney.account.operation.cashmovement.service.CashMovementService;
 import com.giuseppesica.maney.account.service.LiquidityAccountService;
 import com.giuseppesica.maney.category.model.Category;
 import com.giuseppesica.maney.category.service.CategoryService;

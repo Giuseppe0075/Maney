@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -25,6 +26,7 @@ public class IlliquidAssetController {
 
     private final IlliquidAssetService illiquidAssetService;
     private final AuthenticationHelper authenticationHelper;
+    private final AuthenticationHelper authHelper;
 
     /**
      * Constructor for dependency injection.
@@ -33,9 +35,10 @@ public class IlliquidAssetController {
      * @param authenticationHelper Helper for authentication operations
      */
     @Autowired
-    public IlliquidAssetController(IlliquidAssetService illiquidAssetService, AuthenticationHelper authenticationHelper) {
+    public IlliquidAssetController(IlliquidAssetService illiquidAssetService, AuthenticationHelper authenticationHelper, AuthenticationHelper authHelper) {
         this.illiquidAssetService = illiquidAssetService;
         this.authenticationHelper = authenticationHelper;
+        this.authHelper = authHelper;
     }
 
     /**
@@ -55,6 +58,19 @@ public class IlliquidAssetController {
 
         IlliquidAssetDto assetDto = new IlliquidAssetDto(illiquidAsset);
         return ResponseEntity.ok(assetDto);
+    }
+
+    /**
+     * Retrieves all illiquid assets in the authenticated user's portfolio.
+     *
+     * @param authentication Spring Security authentication object
+     * @return ResponseEntity with list of IlliquidAssetDto
+     */
+    @GetMapping
+    public ResponseEntity<List<IlliquidAssetDto>> getIlliquidAssets(Authentication authentication) {
+        Long portfolioId = authHelper.getAuthenticatedUserPortfolioId(authentication);
+        List<IlliquidAssetDto> illiquidAssets = illiquidAssetService.getIlliquidAssets(portfolioId);
+        return ResponseEntity.ok(illiquidAssets);
     }
 
     /**

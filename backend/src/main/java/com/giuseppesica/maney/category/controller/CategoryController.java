@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * REST Controller for Category management.
  * Provides endpoints for CRUD operations on user categories.
@@ -86,6 +88,16 @@ public class CategoryController {
                 .orElseThrow(() -> new NotFoundException("Category not found"));
         CategoryDto responseDto = new CategoryDto(category);
         return ResponseEntity.ok(responseDto);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CategoryDto>> getUserCategories(Authentication authentication) {
+        User user = userService.UserFromAuthentication(authentication);
+        List<CategoryDto> categories = categoryService.findByUserId(user.getId())
+                .stream()
+                .map(CategoryDto::new)
+                .toList();
+        return ResponseEntity.ok(categories);
     }
 
     /**

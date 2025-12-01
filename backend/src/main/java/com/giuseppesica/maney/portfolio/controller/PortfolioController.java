@@ -4,6 +4,8 @@ import com.giuseppesica.maney.account.dto.LiquidityAccountDto;
 import com.giuseppesica.maney.account.service.LiquidityAccountService;
 import com.giuseppesica.maney.illiquidasset.dto.IlliquidAssetDto;
 import com.giuseppesica.maney.illiquidasset.service.IlliquidAssetService;
+import com.giuseppesica.maney.portfolio.dto.PortfolioDto;
+import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.security.AuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -45,28 +47,27 @@ public class PortfolioController {
     }
 
     /**
-     * Retrieves all illiquid assets in the authenticated user's portfolio.
+     * Retrieves the portfolio of the authenticated user.
+     * Includes all illiquid assets and liquidity accounts in the portfolio.
      *
      * @param authentication Spring Security authentication object
-     * @return ResponseEntity with list of IlliquidAssetDto
+     * @return ResponseEntity with PortfolioDto containing portfolio data and assets
      */
-    @GetMapping("/illiquid-assets")
-    public ResponseEntity<List<IlliquidAssetDto>> getIlliquidAssets(Authentication authentication) {
-        Long portfolioId = authHelper.getAuthenticatedUserPortfolioId(authentication);
-        List<IlliquidAssetDto> illiquidAssets = illiquidAssetService.getIlliquidAssets(portfolioId);
-        return ResponseEntity.ok(illiquidAssets);
-    }
+    @GetMapping
+    public ResponseEntity<PortfolioDto> getPortfolio(Authentication authentication) {
+        // Get authenticated user's portfolio using helper
+        Portfolio portfolio = authHelper.getAuthenticatedUserPortfolio(authentication);
+        Long portfolioId = portfolio.getId();
 
-    /**
-     * Retrieves all liquidity accounts in the authenticated user's portfolio.
-     *
-     * @param authentication Spring Security authentication object
-     * @return ResponseEntity with list of LiquidityAccountDto
-     */
-    @GetMapping("/liquidity-accounts")
-    public ResponseEntity<List<LiquidityAccountDto>> getLiquidityAccounts(Authentication authentication) {
-        Long portfolioId = authHelper.getAuthenticatedUserPortfolioId(authentication);
-        List<LiquidityAccountDto> liquidityAccounts = liquidityAccountService.getLiquidityAccounts(portfolioId);
-        return ResponseEntity.ok(liquidityAccounts);
+        // Retrieve all assets
+        List<IlliquidAssetDto> illiquidAssetDtos = illiquidAssetService.getIlliquidAssets(portfolioId);
+        List<LiquidityAccountDto> liquidityAccountDtos = liquidityAccountService.getLiquidityAccounts(portfolioId);
+
+        // Create and return PortfolioDto
+        PortfolioDto portfolioDto = new PortfolioDto(portfolio);
+        portfolioDto.setIlliquidAssets(illiquidAssetDtos);
+        portfolioDto.setLiquidityAccounts(liquidityAccountDtos);
+
+        return ResponseEntity.ok(portfolioDto);
     }
 }

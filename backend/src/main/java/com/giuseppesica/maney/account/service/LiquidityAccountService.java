@@ -6,6 +6,7 @@ import com.giuseppesica.maney.account.model.LiquidityAccountRepository;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.portfolio.model.PortfolioRepository;
 import com.giuseppesica.maney.utils.CashMovementType;
+import com.giuseppesica.maney.security.NotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,12 +25,14 @@ public class LiquidityAccountService {
         this.portfolioRepository = portfolioRepository;
     }
 
-    public LiquidityAccount saveLiquidityAccount(LiquidityAccountDto dto) {
-        Portfolio portfolio = portfolioRepository.findById(dto.getPortfolioId())
-                .orElseThrow(() -> new IllegalArgumentException("Portfolio Not Found"));
-
-        LiquidityAccount liquidityAccount = new LiquidityAccount(dto);
-        liquidityAccount.setPortfolio(portfolio);
+    public LiquidityAccount saveLiquidityAccount(LiquidityAccount liquidityAccount) {
+        Portfolio portfolio = Optional.ofNullable(liquidityAccount.getPortfolio())
+                .orElseThrow(() -> new NotFoundException("Portfolio not found"));
+        Long portfolioId = Optional.ofNullable(portfolio.getId())
+                .orElseThrow(() -> new NotFoundException("Portfolio not found"));
+        Portfolio persistedPortfolio = portfolioRepository.findById(portfolioId)
+                .orElseThrow(() -> new NotFoundException("Portfolio not found"));
+        liquidityAccount.setPortfolio(persistedPortfolio);
         return liquidityAccountRepository.save(liquidityAccount);
     }
 
@@ -60,7 +63,7 @@ public class LiquidityAccountService {
     public LiquidityAccount updateLiquidityAccount(Long id, LiquidityAccountDto dto) {
         LiquidityAccount account = liquidityAccountRepository.findById(id)
                 .map(acc -> (LiquidityAccount) acc)
-                .orElseThrow(() -> new IllegalArgumentException("Liquidity Account Not Found"));
+                .orElseThrow(() -> new NotFoundException("Liquidity account not found"));
 
         // Update fields from Account base class
         account.setName(dto.getName());
@@ -84,7 +87,7 @@ public class LiquidityAccountService {
      */
     public void deleteLiquidityAccount(Long id) {
         if (!liquidityAccountRepository.existsById(id)) {
-            throw new IllegalArgumentException("Liquidity Account Not Found");
+            throw new NotFoundException("Liquidity account not found");
         }
         liquidityAccountRepository.deleteById(id);
     }

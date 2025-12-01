@@ -8,6 +8,7 @@ import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.portfolio.model.PortfolioRepository;
 import com.giuseppesica.maney.utils.CashMovementType;
 import com.giuseppesica.maney.utils.Currency;
+import com.giuseppesica.maney.security.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,7 +83,7 @@ public class LiquidityAccountServiceTest {
         when(liquidityAccountRepository.save(any(LiquidityAccount.class))).thenReturn(liquidityAccount);
 
         // When
-        LiquidityAccount result = liquidityAccountService.saveLiquidityAccount(liquidityAccountDto);
+        LiquidityAccount result = liquidityAccountService.saveLiquidityAccount(liquidityAccount);
 
         // Then
         assertNotNull(result);
@@ -98,13 +100,23 @@ public class LiquidityAccountServiceTest {
     @Test
     public void testSaveLiquidityAccount_PortfolioNotFound_ThrowsException() {
         // Given
+        Portfolio missingPortfolio = new Portfolio();
+        missingPortfolio.setId(999L);
+        LiquidityAccount accountForTest = new LiquidityAccount();
+        accountForTest.setName(liquidityAccount.getName());
+        accountForTest.setInstitution(liquidityAccount.getInstitution());
+        accountForTest.setBalance(liquidityAccount.getBalance());
+        accountForTest.setCurrency(liquidityAccount.getCurrency());
+        accountForTest.setOpenedAt(liquidityAccount.getOpenedAt());
+        accountForTest.setNote(liquidityAccount.getNote());
+        accountForTest.setPortfolio(missingPortfolio);
+
         when(portfolioRepository.findById(999L)).thenReturn(Optional.empty());
-        liquidityAccountDto.setPortfolioId(999L);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> liquidityAccountService.saveLiquidityAccount(liquidityAccountDto));
-        assertEquals("Portfolio Not Found", exception.getMessage());
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> liquidityAccountService.saveLiquidityAccount(accountForTest));
+        assertEquals("Portfolio not found", exception.getMessage());
 
         verify(portfolioRepository, times(1)).findById(999L);
         verify(liquidityAccountRepository, never()).save(any());
@@ -129,7 +141,7 @@ public class LiquidityAccountServiceTest {
         when(liquidityAccountRepository.save(any(LiquidityAccount.class))).thenReturn(accountWithNullFields);
 
         // When
-        LiquidityAccount result = liquidityAccountService.saveLiquidityAccount(liquidityAccountDto);
+        LiquidityAccount result = liquidityAccountService.saveLiquidityAccount(liquidityAccount);
 
         // Then
         assertNotNull(result);
@@ -170,7 +182,7 @@ public class LiquidityAccountServiceTest {
     @Test
     public void testGetLiquidityAccounts_EmptyList_ReturnsEmptyList() {
         // Given
-        when(liquidityAccountRepository.findByPortfolioId(1L)).thenReturn(Arrays.asList());
+        when(liquidityAccountRepository.findByPortfolioId(1L)).thenReturn(List.of());
 
         // When
         List<LiquidityAccountDto> result = liquidityAccountService.getLiquidityAccounts(1L);
@@ -260,9 +272,9 @@ public class LiquidityAccountServiceTest {
         when(liquidityAccountRepository.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> liquidityAccountService.updateLiquidityAccount(999L, liquidityAccountDto));
-        assertEquals("Liquidity Account Not Found", exception.getMessage());
+        assertEquals("Liquidity account not found", exception.getMessage());
 
         verify(liquidityAccountRepository, times(1)).findById(999L);
         verify(liquidityAccountRepository, never()).save(any());
@@ -317,9 +329,9 @@ public class LiquidityAccountServiceTest {
         when(liquidityAccountRepository.existsById(999L)).thenReturn(false);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> liquidityAccountService.deleteLiquidityAccount(999L));
-        assertEquals("Liquidity Account Not Found", exception.getMessage());
+        assertEquals("Liquidity account not found", exception.getMessage());
 
         verify(liquidityAccountRepository, times(1)).existsById(999L);
         verify(liquidityAccountRepository, never()).deleteById(any());
@@ -331,7 +343,7 @@ public class LiquidityAccountServiceTest {
     public void testGetLiquidityAccountByPortfolioIdAndName_Success_ReturnsAccount() {
         // Given
         when(liquidityAccountRepository.findByPortfolioId(1L))
-                .thenReturn(Arrays.asList(liquidityAccount));
+                .thenReturn(Collections.singletonList(liquidityAccount));
 
         // When
         Optional<LiquidityAccount> result = liquidityAccountService
@@ -349,7 +361,7 @@ public class LiquidityAccountServiceTest {
     public void testGetLiquidityAccountByPortfolioIdAndName_NotFound_ReturnsEmpty() {
         // Given
         when(liquidityAccountRepository.findByPortfolioId(1L))
-                .thenReturn(Arrays.asList(liquidityAccount));
+                .thenReturn(Collections.singletonList(liquidityAccount));
 
         // When
         Optional<LiquidityAccount> result = liquidityAccountService
@@ -508,4 +520,3 @@ public class LiquidityAccountServiceTest {
         verify(liquidityAccountRepository, times(1)).save(liquidityAccount);
     }
 }
-

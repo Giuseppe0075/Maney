@@ -49,6 +49,7 @@ public abstract class Account {
 
     @ManyToOne
     @JoinColumn(name = "portfolio_id", nullable = false)
+    @NotNull
     private Portfolio portfolio;
 
     @PrePersist
@@ -64,3 +65,4 @@ public abstract class Account {
     }
 
 }
+

@@ -49,7 +49,8 @@ public class LiquidityAccountController {
         authHelper.validatePortfolioAccess(authentication, liquidityAccountDto.getPortfolioId());
 
         // Create and save the liquidity account
-        LiquidityAccount liquidityAccount = liquidityAccountService.saveLiquidityAccount(liquidityAccountDto);
+        LiquidityAccount liquidityAccount = new LiquidityAccount(liquidityAccountDto);
+        liquidityAccount = liquidityAccountService.saveLiquidityAccount(liquidityAccount);
         LiquidityAccountDto responseDto = new LiquidityAccountDto(liquidityAccount);
 
         return ResponseEntity.ok(responseDto);

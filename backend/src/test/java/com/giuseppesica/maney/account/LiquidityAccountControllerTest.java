@@ -8,7 +8,6 @@ import com.giuseppesica.maney.account.service.LiquidityAccountService;
 import com.giuseppesica.maney.config.SecurityConfig;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.security.AuthenticationHelper;
-import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.utils.Currency;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,7 +87,7 @@ public class LiquidityAccountControllerTest {
     public void testCreateLiquidityAccount_Success_ReturnsCreated() throws Exception {
         // Given
         doNothing().when(authenticationHelper).validatePortfolioAccess(any(), eq(1L));
-        when(liquidityAccountService.saveLiquidityAccount(any(LiquidityAccountDto.class)))
+        when(liquidityAccountService.saveLiquidityAccount(any(LiquidityAccount.class)))
                 .thenReturn(liquidityAccount);
 
         // When & Then
@@ -104,7 +103,7 @@ public class LiquidityAccountControllerTest {
                 .andExpect(jsonPath("$.portfolioId").value(1));
 
         verify(authenticationHelper, times(1)).validatePortfolioAccess(any(), eq(1L));
-        verify(liquidityAccountService, times(1)).saveLiquidityAccount(any(LiquidityAccountDto.class));
+        verify(liquidityAccountService, times(1)).saveLiquidityAccount(any(LiquidityAccount.class));
     }
 
     @Test

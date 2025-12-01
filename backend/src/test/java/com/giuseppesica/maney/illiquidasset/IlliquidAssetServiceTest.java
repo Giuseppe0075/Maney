@@ -74,6 +74,8 @@ public class IlliquidAssetServiceTest {
         illiquidAssetDto.setEstimatedValue(75000.0f);
     }
 
+    // ==================== GET ILLIQUID ASSETS TESTS ====================
+
     @Test
     public void testGetIlliquidAssets_ReturnsListOfAssets() {
         // Given
@@ -104,6 +106,8 @@ public class IlliquidAssetServiceTest {
         assertTrue(result.isEmpty());
         verify(illiquidAssetRepository, times(1)).findByPortfolioId(1L);
     }
+
+    // ==================== GET ILLIQUID ASSET BY ID TESTS ====================
 
     @Test
     public void testGetIlliquidAssetById_AssetExists_ReturnsAsset() {
@@ -149,6 +153,8 @@ public class IlliquidAssetServiceTest {
         verify(illiquidAssetRepository, times(1)).findByIdAndPortfolioId(1L, 99L);
     }
 
+    // ==================== CREATE ILLIQUID ASSET TESTS ====================
+
     @Test
     public void testCreateIlliquidAsset_Success() {
         // Given
@@ -170,6 +176,8 @@ public class IlliquidAssetServiceTest {
         assertEquals(portfolio, result.getPortfolio());
         verify(illiquidAssetRepository, times(1)).save(any(IlliquidAsset.class));
     }
+
+    // ==================== UPDATE ILLIQUID ASSET TESTS ====================
 
     @Test
     public void testUpdateIlliquidAsset_AssetExists_UpdatesSuccessfully() {
@@ -243,6 +251,8 @@ public class IlliquidAssetServiceTest {
         verify(illiquidAssetRepository, never()).save(any(IlliquidAsset.class));
     }
 
+    // ==================== DELETE ILLIQUID ASSET TESTS ====================
+
     @Test
     public void testDeleteIlliquidAsset_Success() {
         // Given
@@ -254,6 +264,8 @@ public class IlliquidAssetServiceTest {
         // Then
         verify(illiquidAssetRepository, times(1)).delete(illiquidAsset1);
     }
+
+    // ==================== EDGE CASE TESTS ====================
 
     @Test
     public void testCreateIlliquidAsset_WithNullDescription_Success() {

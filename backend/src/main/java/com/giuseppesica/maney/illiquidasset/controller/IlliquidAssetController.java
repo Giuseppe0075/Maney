@@ -26,7 +26,6 @@ public class IlliquidAssetController {
 
     private final IlliquidAssetService illiquidAssetService;
     private final AuthenticationHelper authenticationHelper;
-    private final AuthenticationHelper authHelper;
 
     /**
      * Constructor for dependency injection.
@@ -35,10 +34,9 @@ public class IlliquidAssetController {
      * @param authenticationHelper Helper for authentication operations
      */
     @Autowired
-    public IlliquidAssetController(IlliquidAssetService illiquidAssetService, AuthenticationHelper authenticationHelper, AuthenticationHelper authHelper) {
+    public IlliquidAssetController(IlliquidAssetService illiquidAssetService, AuthenticationHelper authenticationHelper) {
         this.illiquidAssetService = illiquidAssetService;
         this.authenticationHelper = authenticationHelper;
-        this.authHelper = authHelper;
     }
 
     /**
@@ -68,7 +66,7 @@ public class IlliquidAssetController {
      */
     @GetMapping
     public ResponseEntity<List<IlliquidAssetDto>> getIlliquidAssets(Authentication authentication) {
-        Long portfolioId = authHelper.getAuthenticatedUserPortfolioId(authentication);
+        Long portfolioId = authenticationHelper.getAuthenticatedUserPortfolioId(authentication);
         List<IlliquidAssetDto> illiquidAssets = illiquidAssetService.getIlliquidAssets(portfolioId);
         return ResponseEntity.ok(illiquidAssets);
     }

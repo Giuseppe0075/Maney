@@ -76,6 +76,88 @@ public class IlliquidAssetControllerTest {
         testAsset.setPortfolio(testPortfolio);
     }
 
+    // ==================== GET ALL ILLIQUID ASSETS TESTS ====================
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetIlliquidAssets_Success_ReturnsAllAssets() throws Exception {
+        // Given
+        IlliquidAssetDto asset1Dto = new IlliquidAssetDto(testAsset);
+
+        IlliquidAsset asset2 = new IlliquidAsset();
+        asset2.setId(2L);
+        asset2.setName("Artwork");
+        asset2.setDescription("Vintage painting");
+        asset2.setEstimatedValue(50000.0f);
+        asset2.setPortfolio(testPortfolio);
+        IlliquidAssetDto asset2Dto = new IlliquidAssetDto(asset2);
+
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
+        when(illiquidAssetService.getIlliquidAssets(1L)).thenReturn(java.util.List.of(asset1Dto, asset2Dto));
+
+        // When & Then
+        mockMvc.perform(get("/user/portfolio/illiquid-assets")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].name").value("Real Estate"))
+                .andExpect(jsonPath("$[1].id").value(2L))
+                .andExpect(jsonPath("$[1].name").value("Artwork"));
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
+        verify(illiquidAssetService, times(1)).getIlliquidAssets(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetIlliquidAssets_EmptyPortfolio_ReturnsEmptyArray() throws Exception {
+        // Given
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
+        when(illiquidAssetService.getIlliquidAssets(1L)).thenReturn(java.util.List.of());
+
+        // When & Then
+        mockMvc.perform(get("/user/portfolio/illiquid-assets")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
+        verify(illiquidAssetService, times(1)).getIlliquidAssets(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetIlliquidAssets_PortfolioNotFound_Returns404() throws Exception {
+        // Given
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class)))
+                .thenThrow(new NotFoundException("Portfolio not found"));
+
+        // When & Then
+        mockMvc.perform(get("/user/portfolio/illiquid-assets")
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
+        verify(illiquidAssetService, never()).getIlliquidAssets(any());
+    }
+
+    @Test
+    public void testGetIlliquidAssets_Unauthorized_Returns401() throws Exception {
+        // When & Then
+        mockMvc.perform(get("/user/portfolio/illiquid-assets"))
+                .andExpect(status().isUnauthorized());
+
+        verify(authenticationHelper, never()).getAuthenticatedUserPortfolioId(any());
+        verify(illiquidAssetService, never()).getIlliquidAssets(any());
+    }
+
+    // ==================== GET SINGLE ILLIQUID ASSET TESTS ====================
+
     @Test
     @WithMockUser(username = "test@example.com")
     public void testGetIlliquidAsset_AssetExists_ReturnsAsset() throws Exception {
@@ -144,6 +226,8 @@ public class IlliquidAssetControllerTest {
         verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
         verify(illiquidAssetService, never()).getIlliquidAssetById(any(), any());
     }
+
+    // ==================== CREATE ILLIQUID ASSET TESTS ====================
 
     @Test
     @WithMockUser(username = "test@example.com")
@@ -223,6 +307,8 @@ public class IlliquidAssetControllerTest {
         verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any(Authentication.class));
         verify(illiquidAssetService, never()).createIlliquidAsset(any(), any());
     }
+
+    // ==================== UPDATE ILLIQUID ASSET TESTS ====================
 
     @Test
     @WithMockUser(username = "test@example.com")
@@ -330,6 +416,8 @@ public class IlliquidAssetControllerTest {
         verify(illiquidAssetService, never()).updateIlliquidAsset(any(), any(), any());
     }
 
+    // ==================== DELETE ILLIQUID ASSET TESTS ====================
+
     @Test
     @WithMockUser(username = "test@example.com")
     public void testDeleteIlliquidAsset_Success_ReturnsNoContent() throws Exception {
@@ -398,6 +486,8 @@ public class IlliquidAssetControllerTest {
         verify(illiquidAssetService, never()).getIlliquidAssetById(any(), any());
         verify(illiquidAssetService, never()).deleteIlliquidAsset(any());
     }
+
+    // ==================== AUTHORIZATION TESTS ====================
 
     @Test
     @WithMockUser(username = "test@example.com")

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Date;
 
 @NoArgsConstructor
@@ -18,7 +19,7 @@ public class TransferDto {
     private Long id;
 
     @NotNull
-    private Date date;
+    private Instant date;
 
     private String note;
 
@@ -33,7 +34,7 @@ public class TransferDto {
 
 
     public TransferDto(Transfer transfer) {
-        this.date = Date.from(transfer.getDate());
+        this.date = transfer.getDate();
         this.note = transfer.getNote();
         this.fromAccountId = transfer.getFromAccount().getId();
         this.toAccountId = transfer.getToAccount().getId();

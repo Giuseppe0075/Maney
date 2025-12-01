@@ -262,5 +262,74 @@ class CategoryServiceTest {
         assertThat(result).isEmpty();
         verify(categoryRepository, times(1)).findByUserId(1L);
     }
+
+    // ==================== SECURITY TESTS - USER ISOLATION ====================
+
+    @Test
+    void testFindByUserAndId_DifferentUser_ReturnsEmpty() {
+        // Given - Category belongs to different user
+        when(categoryRepository.findByUserIdAndId(2L, 1L)).thenReturn(Optional.empty());
+
+        // When
+        Optional<Category> result = categoryService.findByUserAndId(2L, 1L);
+
+        // Then - Category not found because it belongs to different user
+        assertThat(result).isEmpty();
+        verify(categoryRepository, times(1)).findByUserIdAndId(2L, 1L);
+    }
+
+    @Test
+    void testFindByUserId_OnlyReturnsUserCategories() {
+        // Given - Repository is queried with specific user ID
+        Category category1 = new Category();
+        category1.setId(1L);
+        category1.setName("Category 1");
+        category1.setUser(testUser);
+
+        when(categoryRepository.findByUserId(1L)).thenReturn(List.of(category1));
+
+        // When
+        List<Category> result = categoryService.findByUserId(1L);
+
+        // Then - Only categories from specified user are returned
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getUser().getId()).isEqualTo(1L);
+        verify(categoryRepository, times(1)).findByUserId(1L);
+        // Verify it's NOT querying other user IDs
+        verify(categoryRepository, never()).findByUserId(2L);
+    }
+
+    @Test
+    void testFindByUserId_MultipleUsers_IsolatedResults() {
+        // Given - Two different users
+        User user2 = new User();
+        user2.setId(2L);
+        user2.setEmail("user2@example.com");
+
+        Category category1 = new Category();
+        category1.setId(1L);
+        category1.setName("User1 Category");
+        category1.setUser(testUser);
+
+        Category category2 = new Category();
+        category2.setId(2L);
+        category2.setName("User2 Category");
+        category2.setUser(user2);
+
+        when(categoryRepository.findByUserId(1L)).thenReturn(List.of(category1));
+        when(categoryRepository.findByUserId(2L)).thenReturn(List.of(category2));
+
+        // When
+        List<Category> result1 = categoryService.findByUserId(1L);
+        List<Category> result2 = categoryService.findByUserId(2L);
+
+        // Then - Each user only sees their own categories
+        assertThat(result1).hasSize(1);
+        assertThat(result1.getFirst().getName()).isEqualTo("User1 Category");
+        assertThat(result2).hasSize(1);
+        assertThat(result2.getFirst().getName()).isEqualTo("User2 Category");
+        verify(categoryRepository, times(1)).findByUserId(1L);
+        verify(categoryRepository, times(1)).findByUserId(2L);
+    }
 }
 

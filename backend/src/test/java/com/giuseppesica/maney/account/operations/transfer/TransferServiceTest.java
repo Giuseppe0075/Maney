@@ -79,7 +79,7 @@ class TransferServiceTest {
         List<Transfer> result = transferService.getTransfersByUserId(user);
 
         assertEquals(1, result.size());
-        assertEquals(transfer, result.get(0));
+        assertEquals(transfer, result.getFirst());
         verify(transferRepository, times(1)).findByPortfolioId(1L);
     }
 
@@ -134,5 +134,70 @@ class TransferServiceTest {
 
         verify(transferRepository, times(1)).deleteById(5L);
     }
-}
 
+    // ==================== SECURITY TESTS - PORTFOLIO ISOLATION ====================
+
+    @Test
+    void testGetTransfersByUserId_OnlyReturnsUserPortfolioTransfers() {
+        // Given - Repository is queried with user's portfolio ID
+        when(transferRepository.findByPortfolioId(1L)).thenReturn(List.of(transfer));
+
+        // When
+        List<Transfer> result = transferService.getTransfersByUserId(user);
+
+        // Then - Only transfers from user's portfolio are returned
+        assertEquals(1, result.size());
+        verify(transferRepository, times(1)).findByPortfolioId(1L);
+        // Verify it's NOT querying other portfolio IDs
+        verify(transferRepository, never()).findByPortfolioId(2L);
+        verify(transferRepository, never()).findByPortfolioId(argThat(id -> id != 1L));
+    }
+
+    @Test
+    void testGetTransferByIdAndUserId_DifferentPortfolio_ReturnsEmpty() {
+        // Given - User from different portfolio
+        Portfolio otherPortfolio = new Portfolio();
+        otherPortfolio.setId(2L);
+        User otherUser = new User();
+        otherUser.setId(99L);
+        otherUser.setPortfolio(otherPortfolio);
+
+        when(transferRepository.findByIdAndPortfolioId(5L, 2L)).thenReturn(Optional.empty());
+
+        // When
+        Optional<Transfer> result = transferService.getTransferByIdAndUserId(5L, otherUser);
+
+        // Then - Transfer not found because it belongs to different portfolio
+        assertTrue(result.isEmpty());
+        verify(transferRepository, times(1)).findByIdAndPortfolioId(5L, 2L);
+    }
+
+    @Test
+    void testGetTransfersByUserId_MultipleUsers_IsolatedResults() {
+        // Given - Two different users with different portfolios
+        Portfolio portfolio2 = new Portfolio();
+        portfolio2.setId(2L);
+        User user2 = new User();
+        user2.setId(43L);
+        user2.setPortfolio(portfolio2);
+
+        Transfer transfer2 = new Transfer();
+        transfer2.setId(6L);
+        transfer2.setAmount(new BigDecimal("300"));
+
+        when(transferRepository.findByPortfolioId(1L)).thenReturn(List.of(transfer));
+        when(transferRepository.findByPortfolioId(2L)).thenReturn(List.of(transfer2));
+
+        // When
+        List<Transfer> result1 = transferService.getTransfersByUserId(user);
+        List<Transfer> result2 = transferService.getTransfersByUserId(user2);
+
+        // Then - Each user only sees their own transfers
+        assertEquals(1, result1.size());
+        assertEquals(transfer.getId(), result1.getFirst().getId());
+        assertEquals(1, result2.size());
+        assertEquals(transfer2.getId(), result2.getFirst().getId());
+        verify(transferRepository, times(1)).findByPortfolioId(1L);
+        verify(transferRepository, times(1)).findByPortfolioId(2L);
+    }
+}

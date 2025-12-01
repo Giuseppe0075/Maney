@@ -322,5 +322,87 @@ public class IlliquidAssetServiceTest {
         assertEquals(illiquidAsset1.getEstimatedValue(), result.get().getEstimatedValue());
         verify(illiquidAssetRepository, times(1)).save(any(IlliquidAsset.class));
     }
+
+    // ==================== SECURITY TESTS - PORTFOLIO ISOLATION ====================
+
+    @Test
+    public void testGetIlliquidAssets_OnlyReturnsPortfolioAssets() {
+        // Given - Repository is queried with specific portfolio ID
+        when(illiquidAssetRepository.findByPortfolioId(1L))
+                .thenReturn(List.of(illiquidAsset1, illiquidAsset2));
+
+        // When
+        List<IlliquidAssetDto> result = illiquidAssetService.getIlliquidAssets(1L);
+
+        // Then - Only assets from specified portfolio are returned
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(illiquidAssetRepository, times(1)).findByPortfolioId(1L);
+        // Verify it's NOT querying other portfolio IDs
+        verify(illiquidAssetRepository, never()).findByPortfolioId(2L);
+    }
+
+    @Test
+    public void testGetIlliquidAssetById_DifferentPortfolio_ReturnsEmpty() {
+        // Given - Asset belongs to different portfolio
+        when(illiquidAssetRepository.findByIdAndPortfolioId(1L, 2L))
+                .thenReturn(Optional.empty());
+
+        // When
+        Optional<IlliquidAsset> result = illiquidAssetService.getIlliquidAssetById(2L, 1L);
+
+        // Then - Asset not found because it belongs to different portfolio
+        assertFalse(result.isPresent());
+        verify(illiquidAssetRepository, times(1)).findByIdAndPortfolioId(1L, 2L);
+    }
+
+    @Test
+    public void testUpdateIlliquidAsset_DifferentPortfolio_ReturnsEmpty() {
+        // Given - Asset belongs to different portfolio
+        IlliquidAssetDto updateDto = new IlliquidAssetDto();
+        updateDto.setName("Trying to update");
+        updateDto.setEstimatedValue(50000.0f);
+
+        when(illiquidAssetRepository.findByIdAndPortfolioId(1L, 2L))
+                .thenReturn(Optional.empty());
+
+        // When
+        Optional<IlliquidAsset> result = illiquidAssetService.updateIlliquidAsset(2L, 1L, updateDto);
+
+        // Then - Update fails because asset belongs to different portfolio
+        assertFalse(result.isPresent());
+        verify(illiquidAssetRepository, times(1)).findByIdAndPortfolioId(1L, 2L);
+        verify(illiquidAssetRepository, never()).save(any());
+    }
+
+    @Test
+    public void testGetIlliquidAssets_MultiplePortfolios_IsolatedResults() {
+        // Given - Two different portfolios
+        Portfolio portfolio2 = new Portfolio();
+        portfolio2.setId(2L);
+
+        IlliquidAsset asset3 = new IlliquidAsset();
+        asset3.setId(3L);
+        asset3.setName("Portfolio2 Asset");
+        asset3.setEstimatedValue(30000.0f);
+        asset3.setPortfolio(portfolio2);
+
+        when(illiquidAssetRepository.findByPortfolioId(1L))
+                .thenReturn(List.of(illiquidAsset1, illiquidAsset2));
+        when(illiquidAssetRepository.findByPortfolioId(2L))
+                .thenReturn(List.of(asset3));
+
+        // When
+        List<IlliquidAssetDto> result1 = illiquidAssetService.getIlliquidAssets(1L);
+        List<IlliquidAssetDto> result2 = illiquidAssetService.getIlliquidAssets(2L);
+
+        // Then - Each portfolio only sees their own assets
+        assertEquals(2, result1.size());
+        assertEquals("Real Estate", result1.getFirst().getName());
+        assertEquals(1, result2.size());
+        assertEquals("Portfolio2 Asset", result2.getFirst().getName());
+        verify(illiquidAssetRepository, times(1)).findByPortfolioId(1L);
+        verify(illiquidAssetRepository, times(1)).findByPortfolioId(2L);
+    }
 }
 

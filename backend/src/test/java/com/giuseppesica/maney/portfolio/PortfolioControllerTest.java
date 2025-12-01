@@ -207,5 +207,46 @@ PortfolioControllerTest {
         verify(illiquidAssetService, times(1)).getIlliquidAssets(1L);
         verify(liquidityAccountService, times(1)).getLiquidityAccounts(1L);
     }
+
+    // ==================== SECURITY TESTS - CROSS-USER ACCESS ====================
+
+    @Test
+    @WithMockUser(username = "john@example.com")
+    public void testGetPortfolio_OnlyReturnsAuthenticatedUserPortfolio() throws Exception {
+        // Given - Portfolio helper returns only authenticated user's portfolio
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any())).thenReturn(portfolio);
+        when(illiquidAssetService.getIlliquidAssets(1L)).thenReturn(new ArrayList<>());
+        when(liquidityAccountService.getLiquidityAccounts(1L)).thenReturn(new ArrayList<>());
+
+        // When & Then - Only the authenticated user's portfolio is returned
+        mockMvc.perform(get("/user/portfolio")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+
+        // Verify the helper is called to get authenticated user's portfolio
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any());
+        // Verify assets are only fetched for this portfolio
+        verify(illiquidAssetService, times(1)).getIlliquidAssets(1L);
+        verify(liquidityAccountService, times(1)).getLiquidityAccounts(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "john@example.com")
+    public void testGetPortfolio_PortfolioNotFoundForUser_ReturnsNotFound() throws Exception {
+        // Given - User has no portfolio
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any()))
+                .thenThrow(new NotFoundException("Portfolio not found"));
+
+        // When & Then - Should return 404
+        mockMvc.perform(get("/user/portfolio")
+                        .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Portfolio not found"));
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any());
+        verify(illiquidAssetService, never()).getIlliquidAssets(any());
+        verify(liquidityAccountService, never()).getLiquidityAccounts(any());
+    }
 }
 

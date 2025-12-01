@@ -576,4 +576,84 @@ public class IlliquidAssetControllerTest {
         verify(illiquidAssetService, never()).getIlliquidAssetById(any(), any());
         verify(illiquidAssetService, never()).deleteIlliquidAsset(any());
     }
+
+    // ==================== SECURITY TESTS - CROSS-USER ACCESS ====================
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetIlliquidAsset_CrossUserAccess_ReturnsNotFound() throws Exception {
+        // Given - User tries to access asset from another portfolio
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
+        when(illiquidAssetService.getIlliquidAssetById(1L, 999L)).thenReturn(Optional.empty());
+
+        // When & Then - Should return 404 (not found) to avoid information disclosure
+        mockMvc.perform(get("/user/portfolio/illiquid-assets/{id}", 999L)
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
+        verify(illiquidAssetService, times(1)).getIlliquidAssetById(1L, 999L);
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testUpdateIlliquidAsset_CrossUserAccess_ReturnsNotFound() throws Exception {
+        // Given - User tries to update asset from another portfolio
+        IlliquidAssetDto updateDto = new IlliquidAssetDto();
+        updateDto.setName("Hacked Asset");
+        updateDto.setDescription("Trying to update other user's asset");
+        updateDto.setEstimatedValue(100000.0f);
+
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
+        when(illiquidAssetService.updateIlliquidAsset(eq(1L), eq(999L), any(IlliquidAssetDto.class)))
+                .thenReturn(Optional.empty());
+
+        // When & Then - Should return 404
+        mockMvc.perform(put("/user/portfolio/illiquid-assets/{id}", 999L)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isNotFound());
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
+        verify(illiquidAssetService, times(1)).updateIlliquidAsset(eq(1L), eq(999L), any(IlliquidAssetDto.class));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testDeleteIlliquidAsset_CrossUserAccess_ReturnsNotFound() throws Exception {
+        // Given - User tries to delete asset from another portfolio
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
+        when(illiquidAssetService.getIlliquidAssetById(1L, 999L)).thenReturn(Optional.empty());
+
+        // When & Then - Should return 404
+        mockMvc.perform(delete("/user/portfolio/illiquid-assets/{id}", 999L)
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
+        verify(illiquidAssetService, times(1)).getIlliquidAssetById(1L, 999L);
+        verify(illiquidAssetService, never()).deleteIlliquidAsset(any());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetIlliquidAssets_OnlyReturnsUserAssets() throws Exception {
+        // Given - Service should only return assets from user's portfolio
+        IlliquidAssetDto asset1Dto = new IlliquidAssetDto(testAsset);
+
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any(Authentication.class))).thenReturn(1L);
+        when(illiquidAssetService.getIlliquidAssets(1L)).thenReturn(java.util.List.of(asset1Dto));
+
+        // When & Then - Only user's assets are returned
+        mockMvc.perform(get("/user/portfolio/illiquid-assets")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("Real Estate"));
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any(Authentication.class));
+        verify(illiquidAssetService, times(1)).getIlliquidAssets(1L);
+    }
 }

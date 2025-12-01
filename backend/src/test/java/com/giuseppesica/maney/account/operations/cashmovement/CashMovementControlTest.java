@@ -538,5 +538,88 @@ public class CashMovementControlTest {
         );
         verify(cashMovementService, times(1)).deleteCashMovement(outcomeCashMovement);
     }
+
+    // ==================== SECURITY TESTS - CROSS-USER ACCESS ====================
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetCashMovementById_CrossUserAccess_ReturnsNotFound() throws Exception {
+        // Given - User tries to access cash movement from another user
+        when(userService.UserFromAuthentication(any())).thenReturn(user);
+        when(cashMovementService.getCashMovementByIdAndUserId(999L, user))
+                .thenReturn(Optional.empty());
+
+        // When & Then - Should return 404 (not found) to avoid information disclosure
+        mockMvc.perform(get("/user/portfolio/liquidity-accounts/cash-movements/999")
+                        .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Cash Movement Not Found"));
+
+        verify(cashMovementService, times(1)).getCashMovementByIdAndUserId(999L, user);
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testUpdateCashMovement_CrossUserAccess_ReturnsNotFound() throws Exception {
+        // Given - User tries to update cash movement from another user
+        CashMovementDto updateDto = new CashMovementDto();
+        updateDto.setDate(Instant.parse("2025-01-01T10:00:00Z"));
+        updateDto.setAmount(new BigDecimal("500.00"));
+        updateDto.setType(CashMovementType.INCOME);
+        updateDto.setLiquidityAccountName("Conto Corrente");
+        updateDto.setCategoryId(1L);
+
+        when(userService.UserFromAuthentication(any())).thenReturn(user);
+        when(cashMovementService.getCashMovementByIdAndUserId(999L, user))
+                .thenReturn(Optional.empty());
+
+        // When & Then - Should return 404
+        mockMvc.perform(put("/user/portfolio/liquidity-accounts/cash-movements/999")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Cash Movement Not Found"));
+
+        verify(cashMovementService, times(1)).getCashMovementByIdAndUserId(999L, user);
+        verify(cashMovementService, never()).saveCashMovement(any());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testDeleteCashMovement_CrossUserAccess_ReturnsNotFound() throws Exception {
+        // Given - User tries to delete cash movement from another user
+        when(userService.UserFromAuthentication(any())).thenReturn(user);
+        when(cashMovementService.getCashMovementByIdAndUserId(999L, user))
+                .thenReturn(Optional.empty());
+
+        // When & Then - Should return 404
+        mockMvc.perform(delete("/user/portfolio/liquidity-accounts/cash-movements/999")
+                        .with(csrf()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Cash Movement Not Found"));
+
+        verify(cashMovementService, times(1)).getCashMovementByIdAndUserId(999L, user);
+        verify(cashMovementService, never()).deleteCashMovement(any());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetCashMovements_OnlyReturnsUserMovements() throws Exception {
+        // Given - Service should only return movements from user's portfolio
+        when(userService.UserFromAuthentication(any())).thenReturn(user);
+        when(cashMovementService.getCashMovementsByUserId(user))
+                .thenReturn(List.of(cashMovement));
+
+        // When & Then - Only user's movements are returned
+        mockMvc.perform(get("/user/portfolio/liquidity-accounts/cash-movements")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].note").value("Stipendio gennaio"));
+
+        verify(cashMovementService, times(1)).getCashMovementsByUserId(user);
+    }
 }
 

@@ -376,5 +376,74 @@ public class CashMovementServiceTest {
         assertNotNull(result.getCategory());
         verify(cashMovementRepository, times(1)).save(cashMovement);
     }
+
+    // ==================== SECURITY TESTS - PORTFOLIO ISOLATION ====================
+
+    @Test
+    public void testGetCashMovementsByUserId_OnlyReturnsUserPortfolioMovements() {
+        // Given - Repository is queried with user's portfolio ID
+        when(cashMovementRepository.findByPortfolioId(1L))
+                .thenReturn(List.of(cashMovement));
+
+        // When
+        List<CashMovement> result = cashMovementService.getCashMovementsByUserId(user);
+
+        // Then - Only movements from user's portfolio are returned
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(cashMovementRepository, times(1)).findByPortfolioId(1L);
+        // Verify it's NOT querying other portfolio IDs
+        verify(cashMovementRepository, never()).findByPortfolioId(2L);
+    }
+
+    @Test
+    public void testGetCashMovementByIdAndUserId_DifferentPortfolio_ReturnsEmpty() {
+        // Given - User from different portfolio
+        Portfolio otherPortfolio = new Portfolio();
+        otherPortfolio.setId(2L);
+        User otherUser = new User();
+        otherUser.setId(2L);
+        otherUser.setPortfolio(otherPortfolio);
+
+        when(cashMovementRepository.findByIdAndPortfolioId(1L, 2L))
+                .thenReturn(Optional.empty());
+
+        // When
+        Optional<CashMovement> result = cashMovementService.getCashMovementByIdAndUserId(1L, otherUser);
+
+        // Then - Movement not found because it belongs to different portfolio
+        assertFalse(result.isPresent());
+        verify(cashMovementRepository, times(1)).findByIdAndPortfolioId(1L, 2L);
+    }
+
+    @Test
+    public void testGetCashMovementsByUserId_MultipleUsers_IsolatedResults() {
+        // Given - Two different users with different portfolios
+        Portfolio portfolio2 = new Portfolio();
+        portfolio2.setId(2L);
+        User user2 = new User();
+        user2.setId(2L);
+        user2.setPortfolio(portfolio2);
+
+        CashMovement movement2 = new CashMovement();
+        movement2.setId(2L);
+        movement2.setAmount(new BigDecimal("500.00"));
+        movement2.setType(CashMovementType.OUTCOME);
+
+        when(cashMovementRepository.findByPortfolioId(1L)).thenReturn(List.of(cashMovement));
+        when(cashMovementRepository.findByPortfolioId(2L)).thenReturn(List.of(movement2));
+
+        // When
+        List<CashMovement> result1 = cashMovementService.getCashMovementsByUserId(user);
+        List<CashMovement> result2 = cashMovementService.getCashMovementsByUserId(user2);
+
+        // Then - Each user only sees their own movements
+        assertEquals(1, result1.size());
+        assertEquals(cashMovement.getId(), result1.getFirst().getId());
+        assertEquals(1, result2.size());
+        assertEquals(movement2.getId(), result2.getFirst().getId());
+        verify(cashMovementRepository, times(1)).findByPortfolioId(1L);
+        verify(cashMovementRepository, times(1)).findByPortfolioId(2L);
+    }
 }
 

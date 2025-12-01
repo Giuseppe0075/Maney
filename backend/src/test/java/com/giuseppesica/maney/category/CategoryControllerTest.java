@@ -568,5 +568,86 @@ class CategoryControllerTest {
 
         verify(categoryService, never()).findByUserAndId(any(), any());
     }
+
+    // ==================== SECURITY TESTS - CROSS-USER ACCESS ====================
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void testGetCategory_CrossUserAccess_NotFound() throws Exception {
+        // Given - User tries to access category from another user
+        when(userService.UserFromAuthentication(any())).thenReturn(testUser);
+        when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.empty());
+
+        // When & Then - Should return 404 (not found) to avoid information disclosure
+        mockMvc.perform(get("/user/categories/{id}", 2L)
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+
+        verify(categoryService, times(1)).findByUserAndId(1L, 2L);
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void testUpdateCategory_CrossUserAccess_NotFound() throws Exception {
+        // Given - User tries to update category from another user
+        CategoryDto updateDto = new CategoryDto();
+        updateDto.setName("Hacked Category");
+        updateDto.setColor("#FF0000");
+        updateDto.setType(CategoryType.INCOME);
+
+        when(userService.UserFromAuthentication(any())).thenReturn(testUser);
+        when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.empty());
+
+        // When & Then - Should return 404
+        mockMvc.perform(put("/user/categories/{id}", 2L)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isNotFound());
+
+        verify(categoryService, times(1)).findByUserAndId(1L, 2L);
+        verify(categoryService, never()).saveCategory(any());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void testDeleteCategory_CrossUserAccess_NotFound() throws Exception {
+        // Given - User tries to delete category from another user
+        when(userService.UserFromAuthentication(any())).thenReturn(testUser);
+        when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.empty());
+
+        // When & Then - Should return 404
+        mockMvc.perform(delete("/user/categories/{id}", 2L)
+                        .with(csrf()))
+                .andExpect(status().isNotFound());
+
+        verify(categoryService, times(1)).findByUserAndId(1L, 2L);
+        verify(categoryService, never()).deleteCategory(any());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void testGetUserCategories_OnlyReturnsUserCategories() throws Exception {
+        // Given - Service should only return categories from user
+        Category userCategory = new Category();
+        userCategory.setId(1L);
+        userCategory.setName("User Category");
+        userCategory.setColor("#FF5733");
+        userCategory.setType(CategoryType.INCOME);
+        userCategory.setUser(testUser);
+
+        when(userService.UserFromAuthentication(any())).thenReturn(testUser);
+        when(categoryService.findByUserId(1L)).thenReturn(List.of(userCategory));
+
+        // When & Then - Only user's categories are returned
+        mockMvc.perform(get("/user/categories")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("User Category"));
+
+        verify(categoryService, times(1)).findByUserId(1L);
+    }
 }
 

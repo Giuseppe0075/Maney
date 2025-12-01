@@ -519,4 +519,75 @@ public class LiquidityAccountServiceTest {
         assertEquals(new BigDecimal("1000.579"), liquidityAccount.getBalance());
         verify(liquidityAccountRepository, times(1)).save(liquidityAccount);
     }
+
+    // ==================== SECURITY TESTS - PORTFOLIO ISOLATION ====================
+
+    @Test
+    public void testGetLiquidityAccounts_OnlyReturnsPortfolioAccounts() {
+        // Given - Repository is queried with specific portfolio ID
+        LiquidityAccount account2 = new LiquidityAccount();
+        account2.setName("Savings Account");
+        account2.setInstitution("UniCredit");
+        account2.setBalance(new BigDecimal("5000.00"));
+        account2.setCurrency(Currency.EUR);
+        account2.setPortfolio(portfolio);
+
+        when(liquidityAccountRepository.findByPortfolioId(1L))
+                .thenReturn(Arrays.asList(liquidityAccount, account2));
+
+        // When
+        List<LiquidityAccountDto> result = liquidityAccountService.getLiquidityAccounts(1L);
+
+        // Then - Only accounts from specified portfolio are returned
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(liquidityAccountRepository, times(1)).findByPortfolioId(1L);
+        // Verify it's NOT querying other portfolio IDs
+        verify(liquidityAccountRepository, never()).findByPortfolioId(2L);
+    }
+
+    @Test
+    public void testGetLiquidityAccountByPortfolioIdAndName_DifferentPortfolio_ReturnsEmpty() {
+        // Given - Account belongs to different portfolio
+        when(liquidityAccountRepository.findByPortfolioId(2L)).thenReturn(List.of());
+
+        // When
+        Optional<LiquidityAccount> result = liquidityAccountService
+                .getLiquidityAccountByPortfolioIdAndName(2L, "Conto Corrente");
+
+        // Then - Account not found because it belongs to different portfolio
+        assertFalse(result.isPresent());
+        verify(liquidityAccountRepository, times(1)).findByPortfolioId(2L);
+    }
+
+    @Test
+    public void testGetLiquidityAccounts_MultiplePortfolios_IsolatedResults() {
+        // Given - Two different portfolios
+        Portfolio portfolio2 = new Portfolio();
+        portfolio2.setId(2L);
+
+        LiquidityAccount account2 = new LiquidityAccount();
+        account2.setName("Portfolio2 Account");
+        account2.setInstitution("Other Bank");
+        account2.setBalance(new BigDecimal("3000.00"));
+        account2.setCurrency(Currency.EUR);
+        account2.setPortfolio(portfolio2);
+
+        when(liquidityAccountRepository.findByPortfolioId(1L))
+                .thenReturn(Collections.singletonList(liquidityAccount));
+        when(liquidityAccountRepository.findByPortfolioId(2L))
+                .thenReturn(Collections.singletonList(account2));
+
+        // When
+        List<LiquidityAccountDto> result1 = liquidityAccountService.getLiquidityAccounts(1L);
+        List<LiquidityAccountDto> result2 = liquidityAccountService.getLiquidityAccounts(2L);
+
+        // Then - Each portfolio only sees their own accounts
+        assertEquals(1, result1.size());
+        assertEquals("Conto Corrente", result1.getFirst().getName());
+        assertEquals(1, result2.size());
+        assertEquals("Portfolio2 Account", result2.getFirst().getName());
+        verify(liquidityAccountRepository, times(1)).findByPortfolioId(1L);
+        verify(liquidityAccountRepository, times(1)).findByPortfolioId(2L);
+    }
 }

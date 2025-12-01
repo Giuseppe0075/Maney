@@ -509,5 +509,90 @@ public class LiquidityAccountControllerTest {
         verify(authenticationHelper, never()).validateResourceAccess(any(), any(), any());
         verify(liquidityAccountService, never()).deleteLiquidityAccount(any());
     }
+
+    // ==================== SECURITY TESTS - CROSS-USER ACCESS ====================
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetLiquidityAccount_CrossUserAccess_ReturnsForbidden() throws Exception {
+        // Given - User tries to access account from another portfolio
+        when(liquidityAccountService.getLiquidityAccountById(999L))
+                .thenReturn(Optional.of(liquidityAccount));
+        doThrow(new IllegalArgumentException("Resource does not belong to user"))
+                .when(authenticationHelper).validateResourceAccess(any(), eq(1L), eq("LiquidityAccount"));
+
+        // When & Then - Should return 400 (Bad Request) with error message
+        mockMvc.perform(get("/user/portfolio/liquidity-accounts/999")
+                        .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Resource does not belong to user"));
+
+        verify(liquidityAccountService, times(1)).getLiquidityAccountById(999L);
+        verify(authenticationHelper, times(1)).validateResourceAccess(any(), eq(1L), eq("LiquidityAccount"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testUpdateLiquidityAccount_CrossUserAccess_ReturnsForbidden() throws Exception {
+        // Given - User tries to update account from another portfolio
+        when(liquidityAccountService.getLiquidityAccountById(999L))
+                .thenReturn(Optional.of(liquidityAccount));
+        doThrow(new IllegalArgumentException("Resource does not belong to user"))
+                .when(authenticationHelper).validateResourceAccess(any(), eq(1L), eq("LiquidityAccount"));
+
+        // When & Then - Should return 400
+        mockMvc.perform(put("/user/portfolio/liquidity-accounts/999")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(liquidityAccountDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Resource does not belong to user"));
+
+        verify(liquidityAccountService, times(1)).getLiquidityAccountById(999L);
+        verify(authenticationHelper, times(1)).validateResourceAccess(any(), eq(1L), eq("LiquidityAccount"));
+        verify(liquidityAccountService, never()).updateLiquidityAccount(any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testDeleteLiquidityAccount_CrossUserAccess_ReturnsForbidden() throws Exception {
+        // Given - User tries to delete account from another portfolio
+        when(liquidityAccountService.getLiquidityAccountById(999L))
+                .thenReturn(Optional.of(liquidityAccount));
+        doThrow(new IllegalArgumentException("Resource does not belong to user"))
+                .when(authenticationHelper).validateResourceAccess(any(), eq(1L), eq("LiquidityAccount"));
+
+        // When & Then - Should return 400
+        mockMvc.perform(delete("/user/portfolio/liquidity-accounts/999")
+                        .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Resource does not belong to user"));
+
+        verify(liquidityAccountService, times(1)).getLiquidityAccountById(999L);
+        verify(authenticationHelper, times(1)).validateResourceAccess(any(), eq(1L), eq("LiquidityAccount"));
+        verify(liquidityAccountService, never()).deleteLiquidityAccount(any());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void testGetLiquidityAccounts_OnlyReturnsUserAccounts() throws Exception {
+        // Given - Service should only return accounts from user's portfolio
+        LiquidityAccountDto dto1 = new LiquidityAccountDto(liquidityAccount);
+
+        when(authenticationHelper.getAuthenticatedUserPortfolioId(any())).thenReturn(1L);
+        when(liquidityAccountService.getLiquidityAccounts(1L))
+                .thenReturn(java.util.List.of(dto1));
+
+        // When & Then - Only user's accounts are returned
+        mockMvc.perform(get("/user/portfolio/liquidity-accounts")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].name").value("Conto Corrente"));
+
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolioId(any());
+        verify(liquidityAccountService, times(1)).getLiquidityAccounts(1L);
+    }
 }
 

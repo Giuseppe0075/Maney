@@ -1,5 +1,6 @@
 package com.giuseppesica.maney.account.service;
 
+import com.giuseppesica.maney.account.controller.LiquidityAccountController;
 import com.giuseppesica.maney.account.dto.LiquidityAccountDto;
 import com.giuseppesica.maney.account.model.LiquidityAccount;
 import com.giuseppesica.maney.account.model.LiquidityAccountRepository;

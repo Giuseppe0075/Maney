@@ -5,6 +5,8 @@ import com.giuseppesica.maney.account.operations.transfer.model.Transfer;
 import com.giuseppesica.maney.account.operations.transfer.model.TransferDto;
 import com.giuseppesica.maney.account.operations.transfer.service.TransferService;
 import com.giuseppesica.maney.account.liquidityaccount.service.LiquidityAccountService;
+import com.giuseppesica.maney.portfolio.model.Portfolio;
+import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.model.User;
 import com.giuseppesica.maney.user.service.UserService;
@@ -47,6 +49,7 @@ public class TransferController {
     private final UserService userService;
     private final TransferService transferService;
     private final LiquidityAccountService liquidityAccountService;
+    private final AuthenticationHelper authenticationHelper;
 
     /**
      * Constructs the TransferController with required dependencies.
@@ -54,12 +57,14 @@ public class TransferController {
      * @param userService service for user authentication and retrieval
      * @param transferService service for transfer persistence and queries
      * @param liquidityAccountService service for account lookups and balance updates
+     * @param authenticationHelper helper for authentication-related operations
      */
     @Autowired
-    public TransferController(UserService userService, TransferService transferService, LiquidityAccountService liquidityAccountService) {
+    public TransferController(UserService userService, TransferService transferService, LiquidityAccountService liquidityAccountService, AuthenticationHelper authenticationHelper) {
         this.userService = userService;
         this.transferService = transferService;
         this.liquidityAccountService = liquidityAccountService;
+        this.authenticationHelper = authenticationHelper;
     }
 
     /**
@@ -97,7 +102,7 @@ public class TransferController {
         liquidityAccountService.saveLiquidityAccount(from);
         liquidityAccountService.saveLiquidityAccount(to);
 
-        return java.util.Arrays.asList(from, to);
+        return List.of(from, to);
     }
 
     /**
@@ -170,9 +175,9 @@ public class TransferController {
             Authentication authentication,
             @RequestBody TransferDto transferDto
     ){
-        User user = userService.UserFromAuthentication(authentication);
+        Portfolio portfolio = authenticationHelper.getAuthenticatedUserPortfolio(authentication);
         List<LiquidityAccount> accounts = updateAccounts(
-                user.getPortfolio().getId(),
+                portfolio.getId(),
                 transferDto.getFromAccountName(),
                 transferDto.getToAccountName(),
                 transferDto.getAmount()

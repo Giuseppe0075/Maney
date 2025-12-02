@@ -1,8 +1,6 @@
 package com.giuseppesica.maney.account.operations;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,6 +36,7 @@ import java.time.Instant;
  * @see com.giuseppesica.maney.account.operations.transfer.model.Transfer
  */
 @Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 public abstract class Operation {

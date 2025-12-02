@@ -9,7 +9,6 @@ import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.model.User;
-import com.giuseppesica.maney.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -46,7 +45,6 @@ import java.util.List;
 @RequestMapping("/user/portfolio/liquidity-accounts/transfers")
 public class TransferController {
 
-    private final UserService userService;
     private final TransferService transferService;
     private final LiquidityAccountService liquidityAccountService;
     private final AuthenticationHelper authenticationHelper;
@@ -54,14 +52,12 @@ public class TransferController {
     /**
      * Constructs the TransferController with required dependencies.
      *
-     * @param userService service for user authentication and retrieval
      * @param transferService service for transfer persistence and queries
      * @param liquidityAccountService service for account lookups and balance updates
      * @param authenticationHelper helper for authentication-related operations
      */
     @Autowired
-    public TransferController(UserService userService, TransferService transferService, LiquidityAccountService liquidityAccountService, AuthenticationHelper authenticationHelper) {
-        this.userService = userService;
+    public TransferController(TransferService transferService, LiquidityAccountService liquidityAccountService, AuthenticationHelper authenticationHelper) {
         this.transferService = transferService;
         this.liquidityAccountService = liquidityAccountService;
         this.authenticationHelper = authenticationHelper;
@@ -112,13 +108,13 @@ public class TransferController {
      * user's portfolio. The list is ordered by the repository's default ordering.</p>
      *
      * @param authentication Spring Security authentication object containing user details
-     * @return ResponseEntity with HTTP 200 and list of transfer DTOs (may be empty)
+     * @return ResponseEntity with HTTP 200 and list of transfer DTOs (perhaps empty)
      */
     @GetMapping
     public ResponseEntity<List<TransferDto>> getAllTransfers(
             Authentication authentication
     ){
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         List<Transfer> transfers = transferService.getTransfersByUserId(user);
         List<TransferDto> transferDtos =
                 transfers.stream()
@@ -143,7 +139,7 @@ public class TransferController {
             Authentication authentication,
             @PathVariable Long id
     ){
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         Transfer transfer = transferService.getTransferByIdAndUserId(id, user)
                 .orElseThrow(() -> new NotFoundException("Not Found Transfer with id: " + id));
         TransferDto transferDto = new TransferDto(transfer);
@@ -224,7 +220,7 @@ public class TransferController {
             @PathVariable Long id,
             @RequestBody TransferDto transferDto
     ){
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         Transfer existingTransfer = transferService.getTransferByIdAndUserId(id, user)
                 .orElseThrow(() -> new NotFoundException("Not Found Transfer with id: " + id));
 
@@ -279,7 +275,7 @@ public class TransferController {
             Authentication authentication,
             @PathVariable Long id
     ){
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         Transfer existingTransfer = transferService.getTransferByIdAndUserId(id, user)
                 .orElseThrow(() -> new NotFoundException("Not Found Transfer with id: " + id));
 

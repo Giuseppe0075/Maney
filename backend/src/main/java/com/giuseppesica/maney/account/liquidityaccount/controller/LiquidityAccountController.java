@@ -3,6 +3,7 @@ package com.giuseppesica.maney.account.liquidityaccount.controller;
 import com.giuseppesica.maney.account.liquidityaccount.dto.LiquidityAccountDto;
 import com.giuseppesica.maney.account.liquidityaccount.model.LiquidityAccount;
 import com.giuseppesica.maney.account.liquidityaccount.service.LiquidityAccountService;
+import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.security.NotFoundException;
 import jakarta.validation.Valid;
@@ -87,10 +88,11 @@ public class LiquidityAccountController {
             @Valid @RequestBody LiquidityAccountDto liquidityAccountDto
     ) {
         // Validate that the portfolio belongs to the authenticated user
-        authHelper.validatePortfolioAccess(authentication, liquidityAccountDto.getPortfolioId());
+        Portfolio portfolio = authHelper.validatePortfolioAccess(authentication, liquidityAccountDto.getPortfolioId());
 
         // Create and save the liquidity account
         LiquidityAccount liquidityAccount = new LiquidityAccount(liquidityAccountDto);
+        liquidityAccount.setPortfolio(portfolio);
         liquidityAccount = liquidityAccountService.saveLiquidityAccount(liquidityAccount);
         LiquidityAccountDto responseDto = new LiquidityAccountDto(liquidityAccount);
 

@@ -73,17 +73,19 @@ public class AuthenticationHelper {
      * Validates that the given portfolio ID belongs to the authenticated user.
      *
      * @param authentication Spring Security authentication object
-     * @param portfolioId portfolio ID to validate
+     * @param portfolioId    portfolio ID to validate
+     * @return Portfolio if access is valid
      * @throws UnauthorizedException if user is not authenticated
-     * @throws NotFoundException if user or portfolio is not found
-     * @throws ForbiddenException if the portfolio does not belong to the user
+     * @throws NotFoundException     if user or portfolio is not found
+     * @throws ForbiddenException    if the portfolio does not belong to the user
      */
-    public void validatePortfolioAccess(Authentication authentication, Long portfolioId) {
-        Long userPortfolioId = getAuthenticatedUserPortfolioId(authentication);
+    public Portfolio validatePortfolioAccess(Authentication authentication, Long portfolioId) {
+        Portfolio userPortfolio = getAuthenticatedUserPortfolio(authentication);
 
-        if (!userPortfolioId.equals(portfolioId)) {
+        if (!portfolioId.equals(userPortfolio.getId())) {
             throw new ForbiddenException("Access denied to portfolio: " + portfolioId);
         }
+        return userPortfolio;
     }
 
     /**

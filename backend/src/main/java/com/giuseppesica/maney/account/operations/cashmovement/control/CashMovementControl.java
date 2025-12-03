@@ -7,9 +7,9 @@ import com.giuseppesica.maney.account.operations.cashmovement.service.CashMoveme
 import com.giuseppesica.maney.account.liquidityaccount.service.LiquidityAccountService;
 import com.giuseppesica.maney.category.model.Category;
 import com.giuseppesica.maney.category.service.CategoryService;
+import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.model.User;
-import com.giuseppesica.maney.user.service.UserService;
 import com.giuseppesica.maney.utils.CashMovementType;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,25 +53,25 @@ import java.util.List;
 @RequestMapping("/user/portfolio/liquidity-accounts/cash-movements")
 public class CashMovementControl {
 
-    private final UserService userService;
     private final CashMovementService cashMovementService;
     private final LiquidityAccountService liquidityAccountService;
     private final CategoryService categoryService;
+    private final AuthenticationHelper authenticationHelper;
 
     /**
      * Constructs the controller with required service dependencies.
      *
-     * @param userService service for user authentication and retrieval
      * @param cashMovementService service for cash movement persistence
      * @param liquidityAccountService service for account balance updates
      * @param categoryService service for category resolution and validation
+     * @param authenticationHelper helper for user authentication and authorization
      */
     @Autowired
-    public CashMovementControl(UserService userService, CashMovementService cashMovementService, LiquidityAccountService liquidityAccountService, CategoryService categoryService) {
-        this.userService = userService;
+    public CashMovementControl(CashMovementService cashMovementService, LiquidityAccountService liquidityAccountService, CategoryService categoryService, AuthenticationHelper authenticationHelper) {
         this.cashMovementService = cashMovementService;
         this.liquidityAccountService = liquidityAccountService;
         this.categoryService = categoryService;
+        this.authenticationHelper = authenticationHelper;
     }
 
     /**
@@ -87,7 +87,7 @@ public class CashMovementControl {
     public ResponseEntity<List<CashMovementDto>> getCashMovements(
             Authentication authentication
     ){
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         List<CashMovement> cashMovements = cashMovementService.getCashMovementsByUserId(user);
         List<CashMovementDto> cashMovementDtos =
                 cashMovements.stream()
@@ -111,7 +111,7 @@ public class CashMovementControl {
             Authentication authentication,
             @PathVariable Long id
             ){
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         CashMovement cashMovement = cashMovementService.getCashMovementByIdAndUserId(id, user)
                 .orElseThrow(() -> new NotFoundException("Cash Movement Not Found"));
         return ResponseEntity.ok(new CashMovementDto(cashMovement));
@@ -146,7 +146,7 @@ public class CashMovementControl {
             Authentication authentication,
             @Valid @RequestBody CashMovementDto cashMovementDto
     ){
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         
         LiquidityAccount liquidityAccount = liquidityAccountService
                 .getLiquidityAccountByPortfolioIdAndName(
@@ -209,7 +209,7 @@ public class CashMovementControl {
             @PathVariable Long id,
             @Valid @RequestBody CashMovementDto cashMovementDto
     ){
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         CashMovement cashMovementToUpdate = cashMovementService.getCashMovementByIdAndUserId(id, user)
                 .orElseThrow(() -> new NotFoundException("Cash Movement Not Found"));
         // Revert previous cash movement effect
@@ -258,7 +258,7 @@ public class CashMovementControl {
             Authentication authentication,
             @PathVariable Long id
     ) {
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         CashMovement cashMovementToDelete = cashMovementService.getCashMovementByIdAndUserId(id, user)
                 .orElseThrow(() -> new NotFoundException("Cash Movement Not Found"));
         // Revert cash movement effect

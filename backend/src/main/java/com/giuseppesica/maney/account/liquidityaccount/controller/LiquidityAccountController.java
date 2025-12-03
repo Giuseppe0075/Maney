@@ -42,21 +42,21 @@ import java.util.List;
 @RequestMapping("/user/portfolio/liquidity-accounts")
 public class LiquidityAccountController {
     private final LiquidityAccountService liquidityAccountService;
-    private final AuthenticationHelper authHelper;
+    private final AuthenticationHelper authenticationHelper;
 
     /**
      * Constructs the controller with required dependencies.
      *
      * @param liquidityAccountService service layer for account operations
-     * @param authHelper helper for authentication and authorization validation
+     * @param authenticationHelper helper for authentication and authorization validation
      */
     @Autowired
     public LiquidityAccountController(
             LiquidityAccountService liquidityAccountService,
-            AuthenticationHelper authHelper
+            AuthenticationHelper authenticationHelper
     ) {
         this.liquidityAccountService = liquidityAccountService;
-        this.authHelper = authHelper;
+        this.authenticationHelper = authenticationHelper;
     }
 
     /**
@@ -88,7 +88,7 @@ public class LiquidityAccountController {
             @Valid @RequestBody LiquidityAccountDto liquidityAccountDto
     ) {
         // Validate that the portfolio belongs to the authenticated user
-        Portfolio portfolio = authHelper.validatePortfolioAccess(authentication, liquidityAccountDto.getPortfolioId());
+        Portfolio portfolio = authenticationHelper.validatePortfolioAccess(authentication, liquidityAccountDto.getPortfolioId());
 
         // Create and save the liquidity account
         LiquidityAccount liquidityAccount = new LiquidityAccount(liquidityAccountDto);
@@ -127,7 +127,7 @@ public class LiquidityAccountController {
 
         // Validate that the account belongs to the user's portfolio
         Long accountPortfolioId = liquidityAccount.getPortfolio().getId();
-        authHelper.validateResourceAccess(authentication, accountPortfolioId, "LiquidityAccount");
+        authenticationHelper.validateResourceAccess(authentication, accountPortfolioId, "LiquidityAccount");
 
         LiquidityAccountDto responseDto = new LiquidityAccountDto(liquidityAccount);
         return ResponseEntity.ok(responseDto);
@@ -141,7 +141,7 @@ public class LiquidityAccountController {
      */
     @GetMapping
     public ResponseEntity<List<LiquidityAccountDto>> getLiquidityAccounts(Authentication authentication) {
-        Long portfolioId = authHelper.getAuthenticatedUserPortfolioId(authentication);
+        Long portfolioId = authenticationHelper.getAuthenticatedUserPortfolioId(authentication);
         List<LiquidityAccountDto> liquidityAccounts = liquidityAccountService.getLiquidityAccounts(portfolioId);
         return ResponseEntity.ok(liquidityAccounts);
     }
@@ -181,7 +181,7 @@ public class LiquidityAccountController {
                 .orElseThrow(() -> new NotFoundException("Liquidity account not found with ID: " + id));
 
         Long accountPortfolioId = existingAccount.getPortfolio().getId();
-        authHelper.validateResourceAccess(authentication, accountPortfolioId, "LiquidityAccount");
+        authenticationHelper.validateResourceAccess(authentication, accountPortfolioId, "LiquidityAccount");
 
         // Update the account
         LiquidityAccount updatedAccount = liquidityAccountService.updateLiquidityAccount(id, liquidityAccountDto);
@@ -220,7 +220,7 @@ public class LiquidityAccountController {
                 .orElseThrow(() -> new NotFoundException("Liquidity account not found with ID: " + id));
 
         Long accountPortfolioId = existingAccount.getPortfolio().getId();
-        authHelper.validateResourceAccess(authentication, accountPortfolioId, "LiquidityAccount");
+        authenticationHelper.validateResourceAccess(authentication, accountPortfolioId, "LiquidityAccount");
 
         // Delete the account
         liquidityAccountService.deleteLiquidityAccount(id);

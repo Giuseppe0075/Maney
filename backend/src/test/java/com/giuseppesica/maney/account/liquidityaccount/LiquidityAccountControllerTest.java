@@ -86,7 +86,7 @@ public class LiquidityAccountControllerTest {
     @WithMockUser(username = "test@example.com")
     public void testCreateLiquidityAccount_Success_ReturnsCreated() throws Exception {
         // Given
-        doNothing().when(authenticationHelper).validatePortfolioAccess(any(), eq(1L));
+        when(authenticationHelper.validatePortfolioAccess(any(), eq(1L))).thenReturn(portfolio);
         when(liquidityAccountService.saveLiquidityAccount(any(LiquidityAccount.class)))
                 .thenReturn(liquidityAccount);
 

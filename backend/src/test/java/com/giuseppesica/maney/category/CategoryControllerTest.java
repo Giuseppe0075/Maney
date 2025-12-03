@@ -9,7 +9,6 @@ import com.giuseppesica.maney.config.CorsConfig;
 import com.giuseppesica.maney.config.SecurityConfig;
 import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.user.model.User;
-import com.giuseppesica.maney.user.service.UserService;
 import com.giuseppesica.maney.utils.CategoryType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,9 +47,6 @@ class CategoryControllerTest {
 
     @MockitoBean
     private CategoryService categoryService;
-
-    @MockitoBean
-    private UserService userService;
 
     @MockitoBean
     private AuthenticationHelper authenticationHelper;
@@ -100,7 +96,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "test@example.com")
     void testCreateCategory_Success_ReturnsCreated() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
 
         Category savedCategory = new Category(testCategoryDto);
         savedCategory.setId(3L);
@@ -119,7 +115,7 @@ class CategoryControllerTest {
                 .andExpect(jsonPath("$.color").value("#28A745"))
                 .andExpect(jsonPath("$.type").value("INCOME"));
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(categoryService, times(1)).saveCategory(any(Category.class));
     }
 
@@ -129,7 +125,7 @@ class CategoryControllerTest {
         // Given
         testCategoryDto.setParentId(1L);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findById(1L)).thenReturn(Optional.of(testParentCategory));
 
         Category savedCategory = new Category(testCategoryDto);
@@ -159,7 +155,7 @@ class CategoryControllerTest {
         // Given
         testCategoryDto.setParentId(999L);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -198,7 +194,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "test@example.com")
     void testGetCategory_Success_ReturnsCategory() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.of(testCategory));
 
         // When & Then
@@ -211,7 +207,7 @@ class CategoryControllerTest {
                 .andExpect(jsonPath("$.type").value("OUTCOME"))
                 .andExpect(jsonPath("$.parentId").value(1L));
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(categoryService, times(1)).findByUserAndId(1L, 2L);
     }
 
@@ -219,7 +215,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "test@example.com")
     void testGetCategory_NotFound_Returns404() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 999L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -252,7 +248,7 @@ class CategoryControllerTest {
 
         List<Category> categories = List.of(category1, category2);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserId(1L)).thenReturn(categories);
 
         // When & Then
@@ -269,7 +265,7 @@ class CategoryControllerTest {
                 .andExpect(jsonPath("$[1].color").value("#33C3FF"))
                 .andExpect(jsonPath("$[1].type").value("OUTCOME"));
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(categoryService, times(1)).findByUserId(1L);
     }
 
@@ -277,7 +273,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "test@example.com")
     void testGetUserCategories_EmptyList_ReturnsEmptyArray() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserId(1L)).thenReturn(new ArrayList<>());
 
         // When & Then
@@ -288,7 +284,7 @@ class CategoryControllerTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
 
-        verify(userService, times(1)).UserFromAuthentication(any(Authentication.class));
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(categoryService, times(1)).findByUserId(1L);
     }
 
@@ -317,7 +313,7 @@ class CategoryControllerTest {
 
         List<Category> categories = List.of(parentCategory, childCategory);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserId(1L)).thenReturn(categories);
 
         // When & Then
@@ -358,7 +354,7 @@ class CategoryControllerTest {
         updateDto.setColor("#FF0000");
         updateDto.setType(CategoryType.INCOME);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.of(testCategory));
 
         Category updatedCategory = new Category();
@@ -395,7 +391,7 @@ class CategoryControllerTest {
         updateDto.setType(CategoryType.OUTCOME);
         updateDto.setParentId(1L);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.of(testCategory));
         when(categoryService.findById(1L)).thenReturn(Optional.of(testParentCategory));
         when(categoryService.saveCategory(any(Category.class))).thenReturn(testCategory);
@@ -421,7 +417,7 @@ class CategoryControllerTest {
         updateDto.setType(CategoryType.OUTCOME);
         updateDto.setParentId(null);  // Remove parent
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.of(testCategory));
         when(categoryService.saveCategory(any(Category.class))).thenReturn(testCategory);
 
@@ -445,7 +441,7 @@ class CategoryControllerTest {
         updateDto.setColor("#FF0000");
         updateDto.setType(CategoryType.INCOME);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 999L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -469,7 +465,7 @@ class CategoryControllerTest {
         updateDto.setType(CategoryType.OUTCOME);
         updateDto.setParentId(999L);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.of(testCategory));
         when(categoryService.findById(999L)).thenReturn(Optional.empty());
 
@@ -490,7 +486,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "test@example.com")
     void testDeleteCategory_Success_ReturnsNoContent() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.of(testCategory));
         doNothing().when(categoryService).deleteCategory(testCategory);
 
@@ -507,7 +503,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "test@example.com")
     void testDeleteCategory_NotFound_Returns404() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 999L)).thenReturn(Optional.empty());
 
         // When & Then
@@ -532,7 +528,7 @@ class CategoryControllerTest {
         children.add(childCategory);
         testParentCategory.setChildren(children);
 
-        when(userService.UserFromAuthentication(any(Authentication.class))).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 1L)).thenReturn(Optional.of(testParentCategory));
         doNothing().when(categoryService).deleteCategory(testParentCategory);
 
@@ -575,7 +571,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "test@example.com")
     void testGetCategory_CrossUserAccess_NotFound() throws Exception {
         // Given - User tries to access category from another user
-        when(userService.UserFromAuthentication(any())).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any())).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.empty());
 
         // When & Then - Should return 404 (not found) to avoid information disclosure
@@ -595,7 +591,7 @@ class CategoryControllerTest {
         updateDto.setColor("#FF0000");
         updateDto.setType(CategoryType.INCOME);
 
-        when(userService.UserFromAuthentication(any())).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any())).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.empty());
 
         // When & Then - Should return 404
@@ -613,7 +609,7 @@ class CategoryControllerTest {
     @WithMockUser(username = "test@example.com")
     void testDeleteCategory_CrossUserAccess_NotFound() throws Exception {
         // Given - User tries to delete category from another user
-        when(userService.UserFromAuthentication(any())).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any())).thenReturn(testUser);
         when(categoryService.findByUserAndId(1L, 2L)).thenReturn(Optional.empty());
 
         // When & Then - Should return 404
@@ -636,7 +632,7 @@ class CategoryControllerTest {
         userCategory.setType(CategoryType.INCOME);
         userCategory.setUser(testUser);
 
-        when(userService.UserFromAuthentication(any())).thenReturn(testUser);
+        when(authenticationHelper.getAuthenticatedUser(any())).thenReturn(testUser);
         when(categoryService.findByUserId(1L)).thenReturn(List.of(userCategory));
 
         // When & Then - Only user's categories are returned

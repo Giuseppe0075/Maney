@@ -10,8 +10,9 @@ import com.giuseppesica.maney.account.liquidityaccount.service.LiquidityAccountS
 import com.giuseppesica.maney.config.SecurityConfig;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.user.model.User;
-import com.giuseppesica.maney.user.service.UserService;
 import com.giuseppesica.maney.utils.Currency;
+import com.giuseppesica.maney.security.AuthenticationHelper;
+import org.springframework.security.core.Authentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +44,6 @@ class TransferControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private UserService userService;
 
     @MockitoBean
     private TransferService transferService;
@@ -52,8 +51,10 @@ class TransferControllerTest {
     @MockitoBean
     private LiquidityAccountService liquidityAccountService;
 
+    @MockitoBean
+    private AuthenticationHelper authenticationHelper;
+
     private User user;
-    private Portfolio portfolio;
     private LiquidityAccount fromAccount;
     private LiquidityAccount toAccount;
     private Transfer transfer;
@@ -63,7 +64,7 @@ class TransferControllerTest {
     void setUp() {
         user = new User();
         user.setId(42L);
-        portfolio = new Portfolio();
+        Portfolio portfolio = new Portfolio();
         portfolio.setId(1L);
         user.setPortfolio(portfolio);
 
@@ -96,12 +97,14 @@ class TransferControllerTest {
         transferDto.setNote("Shift funds");
         transferDto.setFromAccountName("Checking");
         transferDto.setToAccountName("Savings");
+
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(user);
+        when(authenticationHelper.getAuthenticatedUserPortfolio(any(Authentication.class))).thenReturn(portfolio);
     }
 
     @Test
     @WithMockUser
     void testGetAllTransfers_Success() throws Exception {
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransfersByUserId(user)).thenReturn(List.of(transfer));
 
         mockMvc.perform(get("/user/portfolio/liquidity-accounts/transfers").with(csrf()))
@@ -110,13 +113,13 @@ class TransferControllerTest {
                 .andExpect(jsonPath("$[0].toAccountName").value("Savings"))
                 .andExpect(jsonPath("$[0].amount").value(250));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(transferService).getTransfersByUserId(user);
     }
 
     @Test
     @WithMockUser
     void testGetTransferById_Found() throws Exception {
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransferByIdAndUserId(5L, user)).thenReturn(Optional.of(transfer));
 
         mockMvc.perform(get("/user/portfolio/liquidity-accounts/transfers/5").with(csrf()))
@@ -124,19 +127,20 @@ class TransferControllerTest {
                 .andExpect(jsonPath("$.fromAccountName").value("Checking"))
                 .andExpect(jsonPath("$.amount").value(250));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(transferService).getTransferByIdAndUserId(5L, user);
     }
 
     @Test
     @WithMockUser
     void testGetTransferById_NotFound() throws Exception {
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransferByIdAndUserId(5L, user)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/user/portfolio/liquidity-accounts/transfers/5").with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Not Found Transfer with id: 5"));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(transferService).getTransferByIdAndUserId(5L, user);
     }
 
@@ -146,13 +150,12 @@ class TransferControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
 
-        verify(userService, never()).UserFromAuthentication(any());
+        verify(authenticationHelper, never()).getAuthenticatedUser(any());
     }
 
     @Test
     @WithMockUser
     void testCreateTransfer_Success() throws Exception {
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(liquidityAccountService.getLiquidityAccountByPortfolioIdAndName(anyLong(), eq("Checking")))
                 .thenReturn(Optional.of(fromAccount));
         when(liquidityAccountService.getLiquidityAccountByPortfolioIdAndName(anyLong(), eq("Savings")))
@@ -167,6 +170,7 @@ class TransferControllerTest {
                 .andExpect(jsonPath("$.amount").value(250))
                 .andExpect(jsonPath("$.fromAccountName").value("Checking"));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any(Authentication.class));
         verify(liquidityAccountService, times(2)).saveLiquidityAccount(any(LiquidityAccount.class));
         verify(transferService).saveTransfer(any(Transfer.class));
     }
@@ -174,7 +178,6 @@ class TransferControllerTest {
     @Test
     @WithMockUser
     void testCreateTransfer_FromAccountNotFound() throws Exception {
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(liquidityAccountService.getLiquidityAccountByPortfolioIdAndName(anyLong(), eq("Checking")))
                 .thenReturn(Optional.empty());
 
@@ -185,6 +188,7 @@ class TransferControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Liquidity Account not found with name: Checking"));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUserPortfolio(any(Authentication.class));
         verify(liquidityAccountService, never()).saveLiquidityAccount(any());
         verify(transferService, never()).saveTransfer(any());
     }
@@ -192,7 +196,6 @@ class TransferControllerTest {
     @Test
     @WithMockUser
     void testUpdateTransfer_Success() throws Exception {
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransferByIdAndUserId(5L, user)).thenReturn(Optional.of(transfer));
         when(liquidityAccountService.getLiquidityAccountByPortfolioIdAndName(anyLong(), eq("Checking")))
                 .thenReturn(Optional.of(fromAccount));
@@ -207,6 +210,7 @@ class TransferControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.amount").value(250));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(liquidityAccountService, times(4)).saveLiquidityAccount(any(LiquidityAccount.class));
         verify(transferService).saveTransfer(any(Transfer.class));
     }
@@ -214,7 +218,6 @@ class TransferControllerTest {
     @Test
     @WithMockUser
     void testUpdateTransfer_NotFound() throws Exception {
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransferByIdAndUserId(5L, user)).thenReturn(Optional.empty());
 
         mockMvc.perform(put("/user/portfolio/liquidity-accounts/transfers/5")
@@ -224,6 +227,7 @@ class TransferControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Not Found Transfer with id: 5"));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(transferService).getTransferByIdAndUserId(5L, user);
         verify(liquidityAccountService, never()).saveLiquidityAccount(any());
     }
@@ -231,13 +235,13 @@ class TransferControllerTest {
     @Test
     @WithMockUser
     void testDeleteTransfer_Success() throws Exception {
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransferByIdAndUserId(5L, user)).thenReturn(Optional.of(transfer));
         doNothing().when(transferService).deleteTransferById(5L);
 
         mockMvc.perform(delete("/user/portfolio/liquidity-accounts/transfers/5").with(csrf()))
                 .andExpect(status().isNoContent());
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(liquidityAccountService, times(2)).saveLiquidityAccount(any(LiquidityAccount.class));
         verify(transferService).deleteTransferById(5L);
     }
@@ -245,13 +249,13 @@ class TransferControllerTest {
     @Test
     @WithMockUser
     void testDeleteTransfer_NotFound() throws Exception {
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransferByIdAndUserId(5L, user)).thenReturn(Optional.empty());
 
         mockMvc.perform(delete("/user/portfolio/liquidity-accounts/transfers/5").with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Not Found Transfer with id: 5"));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(transferService).getTransferByIdAndUserId(5L, user);
         verify(transferService, never()).deleteTransferById(anyLong());
         verify(liquidityAccountService, never()).saveLiquidityAccount(any());
@@ -264,7 +268,7 @@ class TransferControllerTest {
                         .content(objectMapper.writeValueAsString(transferDto)))
                 .andExpect(status().isForbidden());
 
-        verify(userService, never()).UserFromAuthentication(any());
+        verify(authenticationHelper, never()).getAuthenticatedUser(any());
     }
 
     // ==================== SECURITY TESTS - CROSS-USER ACCESS ====================
@@ -272,26 +276,21 @@ class TransferControllerTest {
     @Test
     @WithMockUser
     void testGetTransferById_CrossUserAccess_NotFound() throws Exception {
-        // Given - User tries to access transfer from another user's portfolio
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransferByIdAndUserId(5L, user)).thenReturn(Optional.empty());
 
-        // When & Then - Should return 404 (not found) to avoid information disclosure
         mockMvc.perform(get("/user/portfolio/liquidity-accounts/transfers/5").with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Not Found Transfer with id: 5"));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(transferService).getTransferByIdAndUserId(5L, user);
     }
 
     @Test
     @WithMockUser
     void testUpdateTransfer_CrossUserAccess_NotFound() throws Exception {
-        // Given - User tries to update transfer from another user's portfolio
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransferByIdAndUserId(5L, user)).thenReturn(Optional.empty());
 
-        // When & Then - Should return 404 (not found)
         mockMvc.perform(put("/user/portfolio/liquidity-accounts/transfers/5")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -299,6 +298,7 @@ class TransferControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Not Found Transfer with id: 5"));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(transferService).getTransferByIdAndUserId(5L, user);
         verify(liquidityAccountService, never()).saveLiquidityAccount(any());
     }
@@ -306,15 +306,13 @@ class TransferControllerTest {
     @Test
     @WithMockUser
     void testDeleteTransfer_CrossUserAccess_NotFound() throws Exception {
-        // Given - User tries to delete transfer from another user's portfolio
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransferByIdAndUserId(5L, user)).thenReturn(Optional.empty());
 
-        // When & Then - Should return 404 (not found)
         mockMvc.perform(delete("/user/portfolio/liquidity-accounts/transfers/5").with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Not Found Transfer with id: 5"));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(transferService).getTransferByIdAndUserId(5L, user);
         verify(transferService, never()).deleteTransferById(anyLong());
         verify(liquidityAccountService, never()).saveLiquidityAccount(any());
@@ -323,16 +321,14 @@ class TransferControllerTest {
     @Test
     @WithMockUser
     void testGetAllTransfers_OnlyReturnsUserTransfers() throws Exception {
-        // Given - Service should only return transfers from user's portfolio
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(transferService.getTransfersByUserId(user)).thenReturn(List.of(transfer));
 
-        // When & Then - Only user's transfers are returned
         mockMvc.perform(get("/user/portfolio/liquidity-accounts/transfers").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1));
 
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(transferService).getTransfersByUserId(user);
     }
 }

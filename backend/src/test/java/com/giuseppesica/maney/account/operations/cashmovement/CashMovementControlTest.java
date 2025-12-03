@@ -12,15 +12,16 @@ import com.giuseppesica.maney.category.service.CategoryService;
 import com.giuseppesica.maney.config.SecurityConfig;
 import com.giuseppesica.maney.portfolio.model.Portfolio;
 import com.giuseppesica.maney.user.model.User;
-import com.giuseppesica.maney.user.service.UserService;
 import com.giuseppesica.maney.utils.CashMovementType;
 import com.giuseppesica.maney.utils.Currency;
+import com.giuseppesica.maney.security.AuthenticationHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -51,9 +52,6 @@ public class CashMovementControlTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private UserService userService;
-
-    @MockitoBean
     private CashMovementService cashMovementService;
 
     @MockitoBean
@@ -61,6 +59,9 @@ public class CashMovementControlTest {
 
     @MockitoBean
     private CategoryService categoryService;
+
+    @MockitoBean
+    private AuthenticationHelper authenticationHelper;
 
     private User user;
     private LiquidityAccount liquidityAccount;
@@ -114,6 +115,8 @@ public class CashMovementControlTest {
         cashMovementDto.setType(CashMovementType.INCOME);
         cashMovementDto.setLiquidityAccountName("Conto Corrente Intesa");
         cashMovementDto.setCategoryId(1L);
+
+        when(authenticationHelper.getAuthenticatedUser(any(Authentication.class))).thenReturn(user);
     }
 
     // ==================== GET ALL CASH MOVEMENTS TESTS ====================
@@ -122,7 +125,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testGetCashMovements_Success_ReturnsList() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementsByUserId(user))
                 .thenReturn(List.of(cashMovement));
 
@@ -136,7 +138,7 @@ public class CashMovementControlTest {
                 .andExpect(jsonPath("$[0].type").value("INCOME"))
                 .andExpect(jsonPath("$[0].liquidityAccountName").value("Conto Corrente Intesa"));
 
-        verify(userService, times(1)).UserFromAuthentication(any());
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(cashMovementService, times(1)).getCashMovementsByUserId(user);
     }
 
@@ -144,7 +146,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testGetCashMovements_EmptyList_ReturnsEmptyArray() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementsByUserId(user))
                 .thenReturn(List.of());
 
@@ -165,7 +166,7 @@ public class CashMovementControlTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
 
-        verify(userService, never()).UserFromAuthentication(any());
+        verify(authenticationHelper, never()).getAuthenticatedUser(any());
         verify(cashMovementService, never()).getCashMovementsByUserId(any());
     }
 
@@ -175,7 +176,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testGetCashMovementById_Success_ReturnsMovement() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(1L, user))
                 .thenReturn(Optional.of(cashMovement));
 
@@ -187,7 +187,7 @@ public class CashMovementControlTest {
                 .andExpect(jsonPath("$.amount").value(1500.00))
                 .andExpect(jsonPath("$.type").value("INCOME"));
 
-        verify(userService, times(1)).UserFromAuthentication(any());
+        verify(authenticationHelper, times(1)).getAuthenticatedUser(any(Authentication.class));
         verify(cashMovementService, times(1)).getCashMovementByIdAndUserId(1L, user);
     }
 
@@ -195,7 +195,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testGetCashMovementById_NotFound_ReturnsNotFound() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(999L, user))
                 .thenReturn(Optional.empty());
 
@@ -217,7 +216,7 @@ public class CashMovementControlTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
 
-        verify(userService, never()).UserFromAuthentication(any());
+        verify(authenticationHelper, never()).getAuthenticatedUser(any());
         verify(cashMovementService, never()).getCashMovementByIdAndUserId(any(), any());
     }
 
@@ -227,7 +226,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testCreateCashMovement_Success_ReturnsCreated() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(liquidityAccountService.getLiquidityAccountByPortfolioIdAndName(1L, "Conto Corrente Intesa"))
                 .thenReturn(Optional.of(liquidityAccount));
         when(categoryService.findByUserAndId(1L, 1L))
@@ -266,7 +264,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testCreateCashMovement_LiquidityAccountNotFound_ReturnsNotFound() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(liquidityAccountService.getLiquidityAccountByPortfolioIdAndName(1L, "Conto Corrente Intesa"))
                 .thenReturn(Optional.empty());
 
@@ -290,7 +287,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testCreateCashMovement_CategoryNotFound_ReturnsNotFound() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(liquidityAccountService.getLiquidityAccountByPortfolioIdAndName(1L, "Conto Corrente Intesa"))
                 .thenReturn(Optional.of(liquidityAccount));
         when(categoryService.findByUserAndId(1L, 1L))
@@ -323,7 +319,7 @@ public class CashMovementControlTest {
                         .content(objectMapper.writeValueAsString(cashMovementDto)))
                 .andExpect(status().isBadRequest());
 
-        verify(userService, never()).UserFromAuthentication(any());
+        verify(authenticationHelper, never()).getAuthenticatedUser(any());
         verify(cashMovementService, never()).saveCashMovement(any());
     }
 
@@ -335,7 +331,7 @@ public class CashMovementControlTest {
                         .content(objectMapper.writeValueAsString(cashMovementDto)))
                 .andExpect(status().isForbidden());
 
-        verify(userService, never()).UserFromAuthentication(any());
+        verify(authenticationHelper, never()).getAuthenticatedUser(any());
         verify(cashMovementService, never()).saveCashMovement(any());
     }
 
@@ -362,7 +358,6 @@ public class CashMovementControlTest {
         updatedMovement.setLiquidityAccount(liquidityAccount);
         updatedMovement.setCategory(category);
 
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(1L, user))
                 .thenReturn(Optional.of(cashMovement));
         when(cashMovementService.saveCashMovement(any(CashMovement.class)))
@@ -396,7 +391,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testUpdateCashMovement_NotFound_ReturnsNotFound() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(999L, user))
                 .thenReturn(Optional.empty());
 
@@ -439,7 +433,7 @@ public class CashMovementControlTest {
                         .content(objectMapper.writeValueAsString(cashMovementDto)))
                 .andExpect(status().isForbidden());
 
-        verify(userService, never()).UserFromAuthentication(any());
+        verify(authenticationHelper, never()).getAuthenticatedUser(any());
         verify(cashMovementService, never()).saveCashMovement(any());
     }
 
@@ -449,7 +443,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testDeleteCashMovement_Success_ReturnsNoContent() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(1L, user))
                 .thenReturn(Optional.of(cashMovement));
         doNothing().when(liquidityAccountService).updateLiquidityAccount(
@@ -477,7 +470,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testDeleteCashMovement_NotFound_ReturnsNotFound() throws Exception {
         // Given
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(999L, user))
                 .thenReturn(Optional.empty());
 
@@ -499,7 +491,7 @@ public class CashMovementControlTest {
         mockMvc.perform(delete("/user/portfolio/liquidity-accounts/cash-movements/1"))
                 .andExpect(status().isForbidden());
 
-        verify(userService, never()).UserFromAuthentication(any());
+        verify(authenticationHelper, never()).getAuthenticatedUser(any());
         verify(cashMovementService, never()).deleteCashMovement(any());
     }
 
@@ -516,7 +508,6 @@ public class CashMovementControlTest {
         outcomeCashMovement.setLiquidityAccount(liquidityAccount);
         outcomeCashMovement.setCategory(category);
 
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(2L, user))
                 .thenReturn(Optional.of(outcomeCashMovement));
         doNothing().when(liquidityAccountService).updateLiquidityAccount(
@@ -545,7 +536,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testGetCashMovementById_CrossUserAccess_ReturnsNotFound() throws Exception {
         // Given - User tries to access cash movement from another user
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(999L, user))
                 .thenReturn(Optional.empty());
 
@@ -569,7 +559,6 @@ public class CashMovementControlTest {
         updateDto.setLiquidityAccountName("Conto Corrente");
         updateDto.setCategoryId(1L);
 
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(999L, user))
                 .thenReturn(Optional.empty());
 
@@ -589,7 +578,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testDeleteCashMovement_CrossUserAccess_ReturnsNotFound() throws Exception {
         // Given - User tries to delete cash movement from another user
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementByIdAndUserId(999L, user))
                 .thenReturn(Optional.empty());
 
@@ -607,7 +595,6 @@ public class CashMovementControlTest {
     @WithMockUser(username = "test@example.com")
     public void testGetCashMovements_OnlyReturnsUserMovements() throws Exception {
         // Given - Service should only return movements from user's portfolio
-        when(userService.UserFromAuthentication(any())).thenReturn(user);
         when(cashMovementService.getCashMovementsByUserId(user))
                 .thenReturn(List.of(cashMovement));
 

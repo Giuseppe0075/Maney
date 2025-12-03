@@ -3,9 +3,9 @@ package com.giuseppesica.maney.category.controller;
 import com.giuseppesica.maney.category.model.Category;
 import com.giuseppesica.maney.category.model.CategoryDto;
 import com.giuseppesica.maney.category.service.CategoryService;
+import com.giuseppesica.maney.security.AuthenticationHelper;
 import com.giuseppesica.maney.security.NotFoundException;
 import com.giuseppesica.maney.user.model.User;
-import com.giuseppesica.maney.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,18 +26,18 @@ import java.util.List;
 @RestController
 @RequestMapping("/user/categories")
 public class CategoryController {
-    private final UserService userService;
     private final CategoryService categoryService;
+    private final AuthenticationHelper authenticationHelper;
 
     /**
      * Constructor for dependency injection.
      *
-     * @param userService Service for user operations
      * @param categoryService Service for category operations
+     * @param authenticationHelper Helper for authentication and user retrieval
      */
-    public CategoryController(UserService userService, CategoryService categoryService) {
-        this.userService = userService;
+    public CategoryController(CategoryService categoryService, AuthenticationHelper authenticationHelper) {
         this.categoryService = categoryService;
+        this.authenticationHelper = authenticationHelper;
     }
 
     /**
@@ -56,7 +56,7 @@ public class CategoryController {
             @Valid @RequestBody CategoryDto categoryDto
             ) {
 
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         Category category = new Category(categoryDto);
         if (categoryDto.getParentId() != null) {
             Category parentCategory = categoryService.findById(categoryDto.getParentId())
@@ -83,7 +83,7 @@ public class CategoryController {
             Authentication authentication,
             @PathVariable Long id
     ) {
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         Category category = categoryService.findByUserAndId(user.getId(), id)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
         CategoryDto responseDto = new CategoryDto(category);
@@ -92,7 +92,7 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<List<CategoryDto>> getUserCategories(Authentication authentication) {
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         List<CategoryDto> categories = categoryService.findByUserId(user.getId())
                 .stream()
                 .map(CategoryDto::new)
@@ -118,7 +118,7 @@ public class CategoryController {
             @PathVariable Long id,
             @Valid @RequestBody CategoryDto categoryDto
     ) {
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         Category category = categoryService.findByUserAndId(user.getId(), id)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
 
@@ -151,7 +151,7 @@ public class CategoryController {
             Authentication authentication,
             @PathVariable Long id
     ) {
-        User user = userService.UserFromAuthentication(authentication);
+        User user = authenticationHelper.getAuthenticatedUser(authentication);
         Category category = categoryService.findByUserAndId(user.getId(), id)
                 .orElseThrow(() -> new NotFoundException("Category not found"));
         categoryService.deleteCategory(category);

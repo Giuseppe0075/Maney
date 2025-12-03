@@ -26,24 +26,24 @@ import java.util.List;
 public class PortfolioController {
     private final IlliquidAssetService illiquidAssetService;
     private final LiquidityAccountService liquidityAccountService;
-    private final AuthenticationHelper authHelper;
+    private final AuthenticationHelper authenticationHelper;
 
     /**
      * Constructor for dependency injection.
      *
      * @param illiquidAssetService Service for illiquid asset operations
      * @param liquidityAccountService Service for liquidity account operations
-     * @param authHelper Helper for authentication operations
+     * @param authenticationHelper Helper for authentication operations
      */
     @Autowired
     public PortfolioController(
             IlliquidAssetService illiquidAssetService,
             LiquidityAccountService liquidityAccountService,
-            AuthenticationHelper authHelper
+            AuthenticationHelper authenticationHelper
     ) {
         this.illiquidAssetService = illiquidAssetService;
         this.liquidityAccountService = liquidityAccountService;
-        this.authHelper = authHelper;
+        this.authenticationHelper = authenticationHelper;
     }
 
     /**
@@ -56,7 +56,7 @@ public class PortfolioController {
     @GetMapping
     public ResponseEntity<PortfolioDto> getPortfolio(Authentication authentication) {
         // Get authenticated user's portfolio using helper
-        Portfolio portfolio = authHelper.getAuthenticatedUserPortfolio(authentication);
+        Portfolio portfolio = authenticationHelper.getAuthenticatedUserPortfolio(authentication);
         Long portfolioId = portfolio.getId();
 
         // Retrieve all assets
